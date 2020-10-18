@@ -1,0 +1,2 @@
+# integraatioprojekti
+Terveysteknologiaprojektiin liittyvää koodisälää
