@@ -5,11 +5,29 @@ Class AMK.DEV1.APNS.APNSender Extends (Ens.BusinessOperation, Ens.OutboundAdapte
 /// This is the ID name of the set of credentials values to be used to access the pushover server
 Property Credentials As %String;
 
+/// Choose alert or success APN, if needed both, do another operation
+Property NotificationProtocol As %String(DISPLAYLIST = ",SuccessMsg,Alert", VALUELIST = ",success,alert") [ Required ];
+
+Parameter SERVICETYPE As %String = "APNS";
+
 Parameter INVOCATION = "Queue";
 
 Parameter DEVICETOKENLENGTH As %Integer = 32;
 
-Parameter SETTINGS As %String = "Credentials:Basic:credentialsSelector,SSLConfig:Connection:sslConfigSelector,SSLCheckServerIdentity:Connection";
+Parameter SETTINGS As %String = "Credentials:Basic:credentialsSelector,NotificationProtocol:Basic,SSLConfig:Connection:sslConfigSelector,SSLCheckServerIdentity:Connection";
+
+/// First, checking what kind of msg we are going to send
+Method PushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse) As %Status
+{
+	If pRequest.Service'=..#SERVICETYPE {
+		Quit $$$ERROR("error",pRequest.Service)
+	} Else {
+		Quit $CASE(..NotificationProtocol,
+					 "success":..SendPushNotification(pRequest,.pResponse),
+					   "alert":..SendAlertPushNotification(pRequest,.pResponse),
+					          :$$$ERROR("EnsPushNotificationsErrNotificationProtocolNotSupported",..NotificationProtocol))
+	}
+}
 
 ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
 {
@@ -41,6 +59,11 @@ ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.Notificati
 	//TODO response / request classes
 }
 
+Method SendAlertPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
+{
+	Quit $$$ERROR($$$NotImplemented)
+}
+
 Method CredentialsSet(pInVal As %String) As %Status
 {
 	
@@ -52,6 +75,15 @@ Method CredentialsSet(pInVal As %String) As %Status
 	Set:tHasUsername user = ..%CredentialsObj.Username, token = ..%CredentialsObj.Password
 	
 	Quit tHasUsername
+}
+
+XData MessageMap
+{
+<MapItems>
+	<MapItem MessageType="EnsLib.PushNotifications.NotificationRequest"> 
+		<Method>PushNotification</Method>
+	</MapItem>
+</MapItems>
 }
 
 }
