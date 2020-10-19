@@ -8,6 +8,10 @@ Property Credentials As %String;
 /// Choose alert or success APN, if needed both, do another operation
 Property NotificationProtocol As %String(DISPLAYLIST = ",SuccessMsg,Alert", VALUELIST = ",success,alert") [ Required ];
 
+Property SSLConfiguration As %String;
+
+Property SSLCheckServerIdentity As %Boolean [ InitialExpression = 0 ];
+
 Parameter SERVICETYPE As %String = "APNS";
 
 Parameter INVOCATION = "Queue";
@@ -40,17 +44,13 @@ ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.Notificati
  	// TODO call credentialsset and add that to httpsreq
  	
  	// Send other info; device, title, message
- 	Set msg("device") = pRequest.Identifiers.GetAt(1)
+ 	Set msg("device") = "iphoneWhite"
  	Set msg("title") = ""_IntegrationName_" Aineisto siirretty"
  	Set msg("message") = "Tiedosto "_Filename_" siirretty"
- 	/*
- 	Set title1 = title("TITLE")
- 	Set msg = message("MESSAGE")
- 	Set deviceInfo = device("DEVICE")
- 	*/
+
  	Set httpsrequest.Params = msg
  	
- 	Set status = httpsrequest.Get("/1/messages.json")
+ 	Set status = httpsrequest.Get("/1/messages.json") // Tämän pitäisi lähettää https request, toinen vaihtoehto käyttää Post() jos tää ei toimi
  	
  	Set response = httpsrequest.HttpResponse
  	
@@ -61,7 +61,17 @@ ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.Notificati
 
 Method SendAlertPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
 {
-	Quit $$$ERROR($$$NotImplemented)
+	
+	Set httpsrequest = ##class(%Net.HttpRequest).%New()
+	
+ 	Set httpsrequest.Server="api.pushover.net"
+ 	Set httpsrequest.Https=$$$YES
+ 	Set httpsrequest.SSLConfiguration="TEST"
+ 	
+	Set msg("device") = "iphoneWhite"
+	Set msg("title") = ""_IntegrationName_" hälytys"
+ 	Set msg("message") = SourceConfigName_", Session: "_session_number  
+ 	// Vaihda oikeisiin nimiin ^
 }
 
 Method CredentialsSet(pInVal As %String) As %Status
