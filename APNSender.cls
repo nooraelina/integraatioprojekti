@@ -33,8 +33,9 @@ Method PushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest
 	}
 }
 
-ClassMethod RequestPushNotification(Filename, IntegrationName)
+ClassMethod RequestPushNotification(Filename, IntegrationName) As AMK.DEV1.APNS.APNSender
 {
+	#Dim SendPush As AMK.DEV1.APNS.APNSender
 	Set pRequest = ##class(EnsLib.PushNotifications.NotificationRequest).%New()
 	Set pRequest.Service = "APNS"
 	Set pRequest.Identifiers = "ipad1"
