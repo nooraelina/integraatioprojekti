@@ -33,30 +33,44 @@ Method PushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest
 	}
 }
 
+ClassMethod RequestPushNotification(Filename, IntegrationName)
+{
+	Set pRequest = ##class(EnsLib.PushNotifications.NotificationRequest).%New()
+	Set pRequest.Service = "APNS"
+	Set pRequest.Identifiers = "ipad1"
+	Set pResponse = ##class(EnsLib.PushNotifications.NotificationResponse).%New()
+
+	Set SendPush = ##class(AMK.DEV1.APNS.APNSender).SendPushNotification(pRequest, pResponse, Filename, IntegrationName)
+
+	Return SendPush
+}
+
 ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
 {
 	Set httpsrequest = ##class(%Net.HttpRequest).%New()
 	
  	Set httpsrequest.Server="api.pushover.net"
  	Set httpsrequest.Https=$$$YES
- 	Set httpsrequest.SSLConfiguration="TEST"
+ 	Set httpsrequest.SSLConfiguration="ClientConfig"
  	
  	// TODO call credentialsset and add that to httpsreq
  	
  	// Send other info; device, title, message
- 	Set msg("device") = "iphoneWhite"
- 	Set msg("title") = ""_IntegrationName_" Aineisto siirretty"
- 	Set msg("message") = "Tiedosto "_Filename_" siirretty"
 
- 	Set httpsrequest.Params = msg
+ 	Do httpsrequest.SetParam("device", "ipad1")
+	Do httpsrequest.SetParam("token", "anafhq3uf6r686vbhpgs1zvnic5b18")
+	Do httpsrequest.SetParam("user", "u5d2491xhnesvkq7bjpagm5nqshd6s")
+ 	Do httpsrequest.SetParam("title", ""_IntegrationName_" Aineisto siirretty")
+ 	Do httpsrequest.SetParam("message", "Tiedosto "_Filename_" siirretty")
  	
- 	Set status = httpsrequest.Get("/1/messages.json") // Tämän pitäisi lähettää https request, toinen vaihtoehto käyttää Post() jos tää ei toimi
+ 	Set status = httpsrequest.Post("/1/messages.json") // Tämän pitäisi lähettää https request, toinen vaihtoehto käyttää Post() jos tää ei toimi
  	
- 	Set response = httpsrequest.HttpResponse
+ 	Set pResponse = httpsrequest.HttpResponse
  	
  	// Remember when we actually delivered it
-	Set response.DeliveredAtUTC = $ZDT($system.Util.LocalWithZTIMEZONEtoUTC($H),3)
+	// Set pRresponse.DeliveredAtUTC = $ZDT($system.Util.LocalWithZTIMEZONEtoUTC($H),3)
 	//TODO response / request classes
+	Return pResponse
 }
 
 Method SendAlertPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
