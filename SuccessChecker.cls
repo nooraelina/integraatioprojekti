@@ -22,6 +22,7 @@ ClassMethod CheckFileOut(tFilename)
 		//Setting up a SMTP server and sending notification message of a succesfull file transfer
 		Set tServer = ##class(AMK.DEV1.Mailer).GMailSMTP()
 		Set tEmail = ##class(AMK.DEV1.Mailer).SendSimpleMessage(tServer, OnlyFileName, IntegrationName)
+		Set Push = ##class(AMK.DEV1.APNS.APNSender).RequestPushNotification(OnlyFileName, IntegrationName)
 		$$$TRACE("Email notification sent of succesfull file transmission, returning")
 		Quit
 }Else{

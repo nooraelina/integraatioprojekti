@@ -46,7 +46,7 @@ ClassMethod RequestPushNotification(Filename, IntegrationName) As AMK.DEV1.APNS.
 	Return SendPush
 }
 
-ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
+ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName) As %Status
 {
 	Set httpsrequest = ##class(%Net.HttpRequest).%New()
 	
@@ -74,18 +74,22 @@ ClassMethod SendPushNotification(pRequest As EnsLib.PushNotifications.Notificati
 	Return pResponse
 }
 
-Method SendAlertPushNotification(pRequest As EnsLib.PushNotifications.NotificationRequest, ByRef pResponse As EnsLib.PushNotifications.NotificationResponse, Filename As %String, IntegrationName)
+Method SendAlertPushNotification(pRequest As Ens.AlertRequest, pResponse As Ens.Response)
 {
 	
 	Set httpsrequest = ##class(%Net.HttpRequest).%New()
 	
  	Set httpsrequest.Server="api.pushover.net"
  	Set httpsrequest.Https=$$$YES
- 	Set httpsrequest.SSLConfiguration="TEST"
+ 	Set httpsrequest.SSLConfiguration="ClientConfig"
  	
-	Set msg("device") = "iphoneWhite"
-	Set msg("title") = ""_IntegrationName_" hälytys"
- 	Set msg("message") = SourceConfigName_", Session: "_session_number  
+	Do httpsrequest.SetParam("device", "ipad1")
+	Do httpsrequest.SetParam("title", "AMK1.1 hälytys")
+ 	Do httpsrequest.SetParam("message", pRequest.SourceConfigName_", Session: "_pRequest.SessionId)
+
+	Set status = httpsrequest.Post("/1/messages.json")
+
+	Set pResponse = httpsrequest.HttpResponse
  	// Vaihda oikeisiin nimiin ^
 }
 
