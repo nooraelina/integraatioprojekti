@@ -19,18 +19,20 @@ Method OnMessage(pAlertRequest As Ens.AlertRequest, Output pResponse As Ens.Resp
 		#Dim tUser As %String
 		
 		Try {
-			Set pHttpsrequest = ##class(%Net.HttpRequest).%New()
+			Set tHttpsrequest = ##class(%Net.HttpRequest).%New()
 			
 			// Add AlertDestination from Ens.AlertRequest to destination device
 			//Set tDevice = pAlertRequest.AlertDestination
 			Set tDevice = "ipad1"
 			
 			// Add credentials (Ens.Adapter)
-			If '$IsObject(..%CredentialsObj) Do ..CredentialsSet(..Credentials) If '$IsObject(..%CredentialsObj) { Set tStatus=$$$EnsError($$$EnsErrNoCredentials,..Credentials) Quit }
-			Set tToken = ..%CredentialsObj.Password
-			Set tUser = ..%CredentialsObj.Username
+			If '$IsObject(..%CredentialsObj) Do ..CredentialsSet(..Credentials) If '$IsObject(..Adapter.%CredentialsObj) { Set tStatus=$$$EnsError($$$EnsErrNoCredentials,..Credentials) Quit }
+			Set tToken = ..Adapter.%CredentialsObj.Password
+			Set tUser = ..Adapter.%CredentialsObj.Username
 
-			Set tHttpsrequest.Https=1
+			Set tHttpsrequest.Server="api.pushover.net"
+			Set tHttpsrequest.Https=$$$YES
+			Set tHttpsrequest.SSLConfiguration="ClientConfig"
 
 			// Construct the alert msg
 			Do tHttpsrequest.SetParam("device", tDevice)
@@ -39,7 +41,11 @@ Method OnMessage(pAlertRequest As Ens.AlertRequest, Output pResponse As Ens.Resp
  			Do tHttpsrequest.SetParam("title", "AMK1.1 hälytys")
  			Do tHttpsrequest.SetParam("message", pAlertRequest.SourceConfigName_", Session: "_pAlertRequest.SessionId) 	
  			
- 			Do ..Adapter.SendFormDataArray(,"POST",tHttpsrequest,,,"/1/messages.json")
+ 			Set status = tHttpsrequest.Post("/1/messages.json")
+
+			Set pResponse = tHttpsrequest.HttpResponse
+
+			Return pResponse
  			
 			//Set tStatus = tHttpsrequest.Post("/1/messages.json")
 			//Set pResponse = tHttpsrequest.HttpResponse
