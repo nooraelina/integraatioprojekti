@@ -19,6 +19,7 @@ Parameter SETTINGS As %String = "Filename:Basic";
 /// Method that activates as a new file is recieved as an Ens.Streamcontainer. Renames the file and saves it
 Method OnMessage(pRequest As Ens.StreamContainer, Output pResponse As %Persistent) As %Status
 {
+	Set SuccessCheck = ##class(AMK.DEV1.SuccessChecker).%New()
 	Quit:'$IsObject(pRequest.Stream) $$$ERROR($$$EnsErrGeneral,"No Stream contained in StreamContainer Request")
 	If "@"'=$E(..Adapter.FilePath) {
 		
@@ -28,8 +29,13 @@ Method OnMessage(pRequest As Ens.StreamContainer, Output pResponse As %Persisten
 		
 		/*Calling PreCheck method to check if the filename already exists in the Outbound folder
 		If the file already exists this adds a timestamp to the filename (and informs about it via Email) and returns the whole path (PreCheck)*/
-		$$$TRACE("Passing the Filename to AMK.Dev1.SuccessChecker.PreCheck to check for duplicate filenames")
-		Set PreCheck = ##class(AMK.DEV1.SuccessChecker).PreCheck(cPath, cFileName)
+		Set PreCheck = SuccessCheck.PreCheck(cPath, cFileName)
+		If SuccessCheck.Mailtype = 2 {
+			$$$TRACE("Filename already exists. Sending Email notification of filename Change")
+			Set pEmail = ..SendRequestAsync("AMK.Email", SuccessCheck)
+		} Else{
+			Set pEmail = 0
+		}
 		
 		//Creating a new filename based on the returnvalue of PreCheck
 		Set tFilename=..Adapter.CreateFilename(##class(%File).GetFilename(PreCheck),..Filename)
@@ -44,8 +50,14 @@ Method OnMessage(pRequest As Ens.StreamContainer, Output pResponse As %Persisten
 		Do pRequest.%Save() ; re-save in case PutStream() optimization changed the Stream filename
 		
 		//Calling CheckFileOut Method that makes sure that the Newly saved file is found in the Outbound Folder (and saves information to DB and informs about it via Email)
-		$$$TRACE("Passing the Filename to AMK.Dev1.SuccessChecker.CheckFileOut to make sure file has been saved succesfully")
-		Do ##class(AMK.DEV1.SuccessChecker).CheckFileOut(NewFilePathName)
+		Do SuccessCheck.CheckFileOut(NewFilePathName)
+		If SuccessCheck.Mailtype = 1 {
+			$$$TRACE("Filetransfer successfull, Sending notifications. Transfer object saved to Database.")
+			Set tEmail = ..SendRequestAsync("AMK.Email", SuccessCheck)
+			Set tPush = ..SendRequestAsync("AMK.Push", SuccessCheck)
+		} Else{
+			set tEmail = 0
+		}
 	} Else {
 		#; Forward to agent
 		If pRequest.Stream.%Extends("%Library.FileStreamAdaptor") {
@@ -61,13 +73,26 @@ Method OnMessage(pRequest As Ens.StreamContainer, Output pResponse As %Persisten
 		//Same Checking methods added here as above (cFileName, cPath, PreCheck, nPath, NewFilePathName and .CheckFileOut)
 		Set cFileName = ##class(%File).GetFilename(pRequest.OriginalFilename)
 		Set cPath = ..Adapter.fixPath(..Adapter.FilePath)_cFileName
-		Set PreCheck = ##class(AMK.DEV1.SuccessChecker).PreCheck(cPath, cFileName)
+		Set PreCheck = SuccessCheck.PreCheck(cPath, cFileName)
+		If SuccessCheck.Mailtype = 2 {
+			$$$TRACE("Filename already exists. Sending Email notification of filename Change")
+			Set pEmail = ..SendRequestAsync("AMK.Email", SuccessCheck)
+		} Else{
+			Set pEmail = 0
+		}
 		Set tFilename=##class(Ens.Util.File).CreateTimestamp(##class(%File).GetFilename(PreCheck),..Filename)
 		Set tAgent=$P(..Adapter.FilePath,":"), tTimeout=+$P(tAgent,"(",2), tAgent=$P(tAgent,"(")  Set:'tTimeout tTimeout=-1
 		Set tSC=..EnQueueToService(tAgent,tMsg,..%RequestHeader,,tFilename) ; !!! Sync(...,,tTimeout,..%RequestHeader.Description)
 		Set nPath = ##class(%File).GetDirectory(PreCheck)
 		Set NewFilePathName = nPath_tFilename
-		Do ##class(AMK.DEV1.SuccessChecker).CheckFileOut(NewFilePathName)
+		Do SuccessCheck.CheckFileOut(NewFilePathName)
+		If SuccessCheck.Mailtype = 1 {
+			$$$TRACE("Filetransfer successfull, Sending notifications. Transfer-object saved to Database.")
+			Set tEmail = ..SendRequestAsync("AMK.Email", SuccessCheck)
+			Set tPush = ..SendRequestAsync("AMK.Push", SuccessCheck)
+		} Else{
+			set tEmail = 0
+		}
 	}
 	Quit tSC
 }

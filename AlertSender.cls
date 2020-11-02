@@ -5,7 +5,11 @@ Parameter ADAPTER = "EnsLib.HTTP.OutboundAdapter";
 
 Property Adapter As EnsLib.HTTP.OutboundAdapter;
 
+Property Devices As %String;
+
 Parameter INVOCATION = "Queue";
+
+Parameter SETTINGS = "Devices";
 
 /// This is the ID name of the set of credentials values to be used to access the external system
 Property Credentials As %String;
@@ -23,16 +27,16 @@ Method OnMessage(pAlertRequest As Ens.AlertRequest, Output pResponse As Ens.Resp
 			
 			// Add AlertDestination from Ens.AlertRequest to destination device
 			//Set tDevice = pAlertRequest.AlertDestination
-			Set tDevice = "ipad1"
+			Set tDevice = ..Devices
 			
 			// Add credentials (Ens.Adapter)
 			If '$IsObject(..%CredentialsObj) Do ..CredentialsSet(..Credentials) If '$IsObject(..Adapter.%CredentialsObj) { Set tStatus=$$$EnsError($$$EnsErrNoCredentials,..Credentials) Quit }
 			Set tToken = ..Adapter.%CredentialsObj.Password
 			Set tUser = ..Adapter.%CredentialsObj.Username
 
-			Set tHttpsrequest.Server="api.pushover.net"
+			Set tHttpsrequest.Server=..Adapter.HTTPServer
 			Set tHttpsrequest.Https=$$$YES
-			Set tHttpsrequest.SSLConfiguration="ClientConfig"
+			Set tHttpsrequest.SSLConfiguration=..Adapter.SSLConfig
 
 			// Construct the alert msg
 			Do tHttpsrequest.SetParam("device", tDevice)
@@ -41,7 +45,7 @@ Method OnMessage(pAlertRequest As Ens.AlertRequest, Output pResponse As Ens.Resp
  			Do tHttpsrequest.SetParam("title", "AMK1.1 hälytys")
  			Do tHttpsrequest.SetParam("message", pAlertRequest.SourceConfigName_", Session: "_pAlertRequest.SessionId) 	
  			
- 			Set status = tHttpsrequest.Post("/1/messages.json")
+ 			Set status = tHttpsrequest.Post(..Adapter.URL)
 
 			Set pResponse = tHttpsrequest.HttpResponse
 

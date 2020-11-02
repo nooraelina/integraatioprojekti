@@ -9,6 +9,11 @@ Property Time As %String;
 
 Property IntegrationName As %String;
 
+Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As %Persistent) As %Status
+{
+	Set DB = ..AddToData(pRequest.Filename, pRequest.TimeStamp, pRequest.IntegrationName)
+}
+
 ClassMethod AddToData(oFilename, oDateTime As %Date, oIntegrationName) As AMK.DEV1.TransferDB
 {
 	#Dim Data As AMK.DEV1.TransferDB
