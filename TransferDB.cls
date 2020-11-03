@@ -18,8 +18,7 @@ ClassMethod AddToData(oFilename, oDateTime As %Date, oIntegrationName) As AMK.DE
 {
 	#Dim Data As AMK.DEV1.TransferDB
 	
-	/*Changes the date(File.DateCreatedGet()), passed on by PassthroughOperation2, to a more readable form. In order to get the milliseconds in to the timestamp
-	the time is changed to UTC-time, so three hours behind Finland. Couldn't find any easy way to fix this. */
+	// Setting the correct time for the timestamp
 	Set oDateTime = $ZDateTime($ZTIMESTAMP,3,,3)
 	Set Secs = $ZDATETIMEH($SYSTEM.SQL.DATEADD("hour",+2,oDateTime),3,1,3)
 	Set oDateTime = $ZDATETIME(Secs,3,1,3)

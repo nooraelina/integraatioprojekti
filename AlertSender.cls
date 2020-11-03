@@ -25,8 +25,6 @@ Method OnMessage(pAlertRequest As Ens.AlertRequest, Output pResponse As Ens.Resp
 		Try {
 			Set tHttpsrequest = ##class(%Net.HttpRequest).%New()
 			
-			// Add AlertDestination from Ens.AlertRequest to destination device
-			//Set tDevice = pAlertRequest.AlertDestination
 			Set tDevice = ..Devices
 			
 			// Add credentials (Ens.Adapter)
@@ -51,8 +49,6 @@ Method OnMessage(pAlertRequest As Ens.AlertRequest, Output pResponse As Ens.Resp
 
 			Return pResponse
  			
-			//Set tStatus = tHttpsrequest.Post("/1/messages.json")
-			//Set pResponse = tHttpsrequest.HttpResponse
 		}
 		Catch {
 			Set tStatus = $$$EnsSystemError

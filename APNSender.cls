@@ -5,7 +5,6 @@ Class AMK.DEV1.APNS.APNSender Extends (Ens.BusinessOperation, Ens.OutboundAdapte
 /// This is the ID name of the set of credentials values to be used to access the pushover server
 Property Credentials As %String;
 
-/// Choose alert or success APN, if needed both, do another operation
 Parameter ADAPTER = "EnsLib.HTTP.OutboundAdapter";
 
 Property Adapter As EnsLib.HTTP.OutboundAdapter;
@@ -15,6 +14,8 @@ Property Devices As %String;
 Parameter INVOCATION = "Queue";
 
 Parameter SETTINGS As %String = "Devices";
+
+// Legacy ClassMethod, not in use. Left alone for now.
 
 ClassMethod RequestPushNotification(Filename, IntegrationName) As AMK.DEV1.APNS.APNSender
 {
@@ -29,6 +30,8 @@ ClassMethod RequestPushNotification(Filename, IntegrationName) As AMK.DEV1.APNS.
 
 	Return SendPush
 }
+
+// Recieves a push request and sends it according to the production settings
 
 Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As Ens.Response) As %Status
 {
@@ -49,8 +52,6 @@ Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As Ens.Re
 	Set tUser = ..Adapter.%CredentialsObj.Username
 
 	Set tDevice = ..Devices
- 	
- 	// Send other info; device, title, message
 
  	Do httpsrequest.SetParam("device", tDevice)
 	Do httpsrequest.SetParam("token", tToken)
@@ -58,15 +59,16 @@ Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As Ens.Re
  	Do httpsrequest.SetParam("title", ""_pRequest.IntegrationName_" Aineisto siirretty")
  	Do httpsrequest.SetParam("message", "Tiedosto "_pRequest.Filename_" siirretty")
  	
- 	Set status = httpsrequest.Post(..Adapter.URL) // Tämän pitäisi lähettää https request, toinen vaihtoehto käyttää Post() jos tää ei toimi
+ 	Set status = httpsrequest.Post(..Adapter.URL)
  	
  	Set pResponse = httpsrequest.HttpResponse
  	
  	// Remember when we actually delivered it
 	// Set pRresponse.DeliveredAtUTC = $ZDT($system.Util.LocalWithZTIMEZONEtoUTC($H),3)
-	//TODO response / request classes
 	Quit tStatus
 }
+
+// Legacy ClassMethod, not in use. Left alone for now.
 
 Method CredentialsSet(pInVal As %String) As %Status
 {

@@ -12,10 +12,8 @@ Property Credentials As %String;
 
 Parameter SETTINGS = "SMTPServer, SMTPPort, Credentials:Basic:credentialsSelector, SSLConfiguration:Connection:sslConfigSelector";
 
-/*Sets up different setting, in order to send the mail to the correct address. I relly tried to make this work with the properties above (so that you could
-	configure all the email setting directly from the production management portal), but I think in order for that to work this method should be an instance method
-	not a class method. Changing this to an instance Method and getting everything to work just wasn't something i was able to wrap my head around :( 
-	So yeah atleast for now the mail setting have to be changed within this method and won't work in the management portal */
+// Recieves SuccessChecker instance and calls the necessary method to sen the required email based on the value of Mailtype property
+
 Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As %Persistent) As %Status
 {
   if pRequest.Mailtype = 1 {

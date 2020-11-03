@@ -19,6 +19,8 @@ Parameter SETTINGS As %String = "Filename:Basic";
 /// Method that activates as a new file is recieved as an Ens.Streamcontainer. Renames the file and saves it
 Method OnMessage(pRequest As Ens.StreamContainer, Output pResponse As %Persistent) As %Status
 {
+	/* A lot of the functionality of former build is replaced by creating an instance of SuccessChecker Class that is bounced around instead of using a lot of method parameters.
+		This enabled the use of instance methods instead of Class methods which in turn helps with Enabling Management portal Settings.*/
 	Set SuccessCheck = ##class(AMK.DEV1.SuccessChecker).%New()
 	Quit:'$IsObject(pRequest.Stream) $$$ERROR($$$EnsErrGeneral,"No Stream contained in StreamContainer Request")
 	If "@"'=$E(..Adapter.FilePath) {

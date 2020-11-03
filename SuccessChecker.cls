@@ -17,8 +17,7 @@ Property Adapter As Ens.BusinessOperation;
 
 Method CheckFileOut(tFilename As %String)
 {
-	/* if the file transferred and saved by PassthroughOperation2 is found in the Outbound folder, the transfer data is adde to the database
-	and an Email notification is send notifying of a succesfull transfer*/
+	// if the file transferred and saved by PassthroughOperation2 is found in the Outbound folder, the transfer data is added to the database
 	If ##class(%File).Exists(tFilename){
 		
 		Set ..IntegrationName = "AMK1.1"
@@ -32,14 +31,9 @@ Method CheckFileOut(tFilename As %String)
 		
 		//Passing required information to the TransferDB class for information storing to database
 		Set DB = ##Class(AMK.DEV1.TransferDB).AddToData(..Filename, ..TimeStamp, ..IntegrationName)
-		
-		//Setting up a SMTP server and sending notification message of a succesfull file transfer
-		//Set tEmail = ..Adapter.SendRequestAsync("AMK.Email", SuccessCheck)
-		//Set Push = ##class(AMK.DEV1.APNS.APNSender).RequestPushNotification(..Filename, ..IntegrationName)
+
 		Quit
 	}Else{
-	/* This Method does(and returns) nothing if the file does not exist, If the file does not exist the problem has happened 
-	in some other class and that class handles alerting / Error handling */
 	Set ..Mailtype = 2
 	Quit
 	}
@@ -55,13 +49,7 @@ Method PreCheck(pFilename, pFile) As %String
 		Set ..Mailtype = 2
 		Set ..OriginalFileName = pFile
 		
-		//Calling .GMailSMTP method that creates the SMTP server configuration for the pEmail
-		//Set pServer = ##class(AMK.DEV1.Mailer).GMailSMTP()
-		
 		Set ..TimeStamp = $ZDATETIME($HOROLOG, 3)
-		
-		//Passing SMTP server configuration (pServer), Filename (pFile), IntegrationName and created TimeStamp to use constructing the notification Email
-		//Set pEmail = ##class(AMK.DEV1.Mailer).SendCopyNotification(pServer, pFile, IntegrationName, ..TimeStamp)
 		
 		//Adding the Timestamp to the files name and returning it
 		Set NewFileName = pFilename_"-"_..TimeStamp
