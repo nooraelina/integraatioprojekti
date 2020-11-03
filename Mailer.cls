@@ -24,7 +24,7 @@ Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As %Persi
   }
   ElseIf pRequest.Mailtype = 2 {
     Set server = ..GMailSMTP()
-    Set message = ..SendCopyNotification(server, pRequest.Filename, pRequest.IntegrationName, pRequest.TimeStamp)
+    Set message = ..SendCopyNotification(server, pRequest.Filename, pRequest.IntegrationName, pRequest.TimeStamp, pRequest.OriginalFileName)
   }	Else{
     Quit 
   }
@@ -76,7 +76,7 @@ Method SendSimpleMessage(server As %Net.SMTP, Filename As %String, IntegrationNa
 
 // Recieves the information about the SMTP server and other file relaterd stuff and send a notification Email that the filename was changed during the integration because of a duplicate
 
-Method SendCopyNotification(server As %Net.SMTP, Filename As %String, IntegrationName, TimeStamp) As %List
+Method SendCopyNotification(server As %Net.SMTP, Filename As %String, IntegrationName, TimeStamp, OriginalFileName) As %List
 {
   Set msg = ##class(%Net.MailMessage).%New()
   Set From=server.authenticator.UserName
@@ -84,10 +84,10 @@ Method SendCopyNotification(server As %Net.SMTP, Filename As %String, Integratio
   Set msg.From = From
   
   Do msg.To.Insert("testienska@gmail.com")
-  Set msg.Subject="File Name Changed During transfer For "_Filename
+  Set msg.Subject="File Name Changed During transfer For "_OriginalFileName
   Set msg.IsBinary=0
   Set msg.IsHTML=0
-  Do msg.TextData.Write("Filename "_Filename_" already exists for "_IntegrationName_" Filename Changed to "_Filename_"-"_TimeStamp)
+  Do msg.TextData.Write("Filename "_OriginalFileName_" already exists for "_IntegrationName_" Filename Changed to "_Filename)
   
   Set status=server.Send(msg)
   If $$$ISERR(status) {

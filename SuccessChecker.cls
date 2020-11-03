@@ -3,6 +3,8 @@ Class AMK.DEV1.SuccessChecker Extends %Persistent
 
 Property Filename As %String;
 
+Property OriginalFileName As %String;
+
 Property IntegrationName As %String;
 
 Property Mailtype As %Integer;
@@ -51,6 +53,7 @@ Method PreCheck(pFilename, pFile) As %String
 		
 		Set IntegrationName = "AMK1.1"
 		Set ..Mailtype = 2
+		Set ..OriginalFileName = pFile
 		
 		//Calling .GMailSMTP method that creates the SMTP server configuration for the pEmail
 		//Set pServer = ##class(AMK.DEV1.Mailer).GMailSMTP()
@@ -91,6 +94,9 @@ Storage Default
 </Value>
 <Value name="6">
 <Value>Adapter</Value>
+</Value>
+<Value name="7">
+<Value>OriginalFileName</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.DEV1.SuccessCheckerD</DataLocation>

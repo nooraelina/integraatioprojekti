@@ -32,7 +32,7 @@ Method OnMessage(pRequest As Ens.StreamContainer, Output pResponse As %Persisten
 		Set PreCheck = SuccessCheck.PreCheck(cPath, cFileName)
 		If SuccessCheck.Mailtype = 2 {
 			$$$TRACE("Filename already exists. Sending Email notification of filename Change")
-			Set pEmail = ..SendRequestAsync("AMK.Email", SuccessCheck)
+			Set pEmail = ..SendRequestAsync("AMK.Email", SuccessCheck, cFileName)
 		} Else{
 			Set pEmail = 0
 		}
