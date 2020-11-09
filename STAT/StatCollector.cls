@@ -1,17 +1,15 @@
-Class AMK.DEV1.STAT.StatCollector Extends (Ens.InboundAdapter, %Persistent, %JSON.Adaptor)
+Class AMK.DEV1.STAT.StatCollector Extends Ens.InboundAdapter
 {
 
 Property Adapter As Ens.InboundAdapter;
 
 Parameter ADAPTER = "Ens.InboundAdapter";
 
-Property IntegrationNro As %String;
-
 /// ProcessInput should be called based to CallInterval setting (from Ens.InboundAdapter)
 ClassMethod ProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
     #Dim count
-    #Dim tJSON
+    
     // Get the number of objects from TransferDB
     Set query = "SELECT COUNT(Filename) FROM AMK_DEV1.TransferDB" // Muuta Filename ja Transferdb !!!
     Set tStatement = ##class(%SQL.Statement).%New()
@@ -23,8 +21,7 @@ ClassMethod ProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObje
         Set count = rset.%GetData(1)
     }
     If count = 0 {WRITE "No entries waiting to be processed. Quitting." QUIT}
-    Set tStatus = CreateJSON(count)
-    WRITE tStatus
+    Set tStatus = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON(3)
 }
 
 ClassMethod CreateJSON(entryCount, Output Something) As %Status
@@ -32,23 +29,34 @@ ClassMethod CreateJSON(entryCount, Output Something) As %Status
     // i is number of objects we need to go through
     // doneCount is number of objects we have gone through
     Set i = entryCount
+    #Dim doneCount As %Integer
     Set doneCount = 0
 
     // TODO Create JSON object
-    Set jsonObject = ##class(AMK.DEV1.STAT.StatCollector).%New()
-    Set jsonObject.IntegrationNro = "AMK1.1.1."
-    DO jsonObject.%JSONExport()
-    Set formatter = ##class(%JSON.Formatter).%New()
-    WRITE formatter
+    Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
 
-    //WHILE doneCount < i {
+    WRITE "before loop doneCount is: ", doneCount, !
+
+    FOR var = doneCount:1:entryCount {
         // TODO Add statentries into JSON object
+        Set jsonObject.IntegrationName = "INT-nnn"
+        Set jsonObject.Hostname = "jee"
+        Set jsonObject.ProductionName = "jee"
+        Set jsonObject.Status = "jee"
+        Set jsonObject.Filename = "jee"
+        Set jsonObject.TimeStamp = "jee"
+        Set jsonObject.MessageID = doneCount
+        Do jsonObject.%JSONExport()
+
+        WRITE !
+        Set doneCount = doneCount + 1
+
+        WRITE "doneCount inside loop: ", doneCount," entryCount inside loop: ", entryCount
         
+        }
 
-        //Set doneCount =+ 1
-    //}
-
-    // return JSON
+    WRITE !, "moi"
+    return jsonObject
 }
 
 ClassMethod DeleteStatEntries() As %Status
