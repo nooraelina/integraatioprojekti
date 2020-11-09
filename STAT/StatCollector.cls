@@ -21,7 +21,9 @@ ClassMethod ProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObje
         Set count = rset.%GetData(1)
     }
     If count = 0 {WRITE "No entries waiting to be processed. Quitting." QUIT}
-    Set tStatus = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON(3)
+    Set jsonMessage = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON(3)
+    // TODO Call StatSender with jsonMessage
+    // TODO Call DeleteStatEntries with StatSender response
 }
 
 ClassMethod CreateJSON(entryCount, Output Something) As %Status
@@ -32,13 +34,13 @@ ClassMethod CreateJSON(entryCount, Output Something) As %Status
     #Dim doneCount As %Integer
     Set doneCount = 0
 
-    // TODO Create JSON object
+    // Create JSON object
     Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
 
     WRITE "before loop doneCount is: ", doneCount, !
 
     FOR var = doneCount:1:entryCount {
-        // TODO Add statentries into JSON object
+        // Add statentries into JSON object
         Set jsonObject.IntegrationName = "INT-nnn"
         Set jsonObject.Hostname = "jee"
         Set jsonObject.ProductionName = "jee"
@@ -48,10 +50,9 @@ ClassMethod CreateJSON(entryCount, Output Something) As %Status
         Set jsonObject.MessageID = doneCount
         Do jsonObject.%JSONExport()
 
-        WRITE !
         Set doneCount = doneCount + 1
 
-        WRITE "doneCount inside loop: ", doneCount," entryCount inside loop: ", entryCount
+        WRITE !, "doneCount inside loop: ", doneCount," entryCount inside loop: ", entryCount, !
         
         }
 
