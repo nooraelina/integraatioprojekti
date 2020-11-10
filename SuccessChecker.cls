@@ -20,7 +20,7 @@ Method CheckFileOut(tFilename As %String)
 	// if the file transferred and saved by PassthroughOperation2 is found in the Outbound folder, the transfer data is added to the database
 	If ##class(%File).Exists(tFilename){
 		
-		Set ..IntegrationName = "AMK1.1"
+		Set ..IntegrationName = $GET(^Ens.Configuration("csp","LastProduction"))
 		Set ..Mailtype = 1
 		
 		//Creating a new instance of %File class in order to check the creation date of the file later

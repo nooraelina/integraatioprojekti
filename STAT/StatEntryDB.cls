@@ -20,9 +20,9 @@ ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.Sta
     Set Data = ##class(AMK.DEV1.STAT.StatEntryDB).%New()
     Set Data.TimeStamp = TransferDB.TimeStamp
     Set Data.MessageID = TransferDB.%Id()
-    Set Data.IntegrationNro = "INT-1234" //No idea how to use the lookup() etc. gotta look in to this
+    Set Data.IntegrationNro = "INT-1234" //No idea how to use the lookup() etc. gotta look into this
     Set Data.HostName = $SYSTEM.INetInfo.LocalHostName()
-    Set Data.ProductionName = "AMK.DEV1" // "saadaan koodipätkällä selville" -thanks for the help, gotta get back to this also :D
+    Set Data.ProductionName = TransferDB.IntegrationName
     Set Data.Status = 1
 
     Do Data.%Save()
