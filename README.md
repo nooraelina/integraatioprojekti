@@ -1,2 +1,2 @@
-# integraatioprojekti
+# Integraatioprojekti
 Terveysteknologiaprojektiin liittyvää koodisälää
