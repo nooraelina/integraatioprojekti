@@ -11,7 +11,7 @@ ClassMethod OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredOb
     #Dim count
     
     // Get the number of objects from StatEntryDB to check if there is any new statentries (Not sure if needed but left it here anyways)
-    Set query = "SELECT COUNT(Filename) FROM AMK_DEV1.TransferDB" // "SELECT COUNT(MessageID) FROM AMK_DEV1_STAT.StatEntryDB"
+    Set query = "SELECT COUNT(MessageID) FROM AMK_DEV1_STAT.StatEntryDB"
     Set tStatement = ##class(%SQL.Statement).%New()
     Set qStatus = tStatement.%Prepare(query)
     If qStatus '= 1 {WRITE "Failed" DO $System.Status.DisplayError(qStatus) QUIT}
@@ -73,10 +73,23 @@ ClassMethod CreateJSON() As %Status
     return jsonObject
 }
 
-ClassMethod DeleteStatEntries() As %Status
+ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
 {
-    // TODO This whole thing
-    set getMessageIdQuery = "SELECT"
+    // Väliaikainen lista testaukseen, tää lista tarkotus saada toisesta produktiosta
+    SET listOfMessageIds=$LISTBUILD(2,4)
+
+    // Create SQL statement, ? = list
+    SET myquery="DELETE FROM AMK_DEV1.TransferDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
+                "WHERE ID %INLIST ?" // WHERE MessageID = "
+    SET tStatement = ##class(%SQL.Statement).%New()
+    SET qStatus = tStatement.%Prepare(myquery)
+        IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}
+    SET rset = tStatement.%Execute(listOfMessageIds)
+
+    // Tämäkin testauksen ajaksi, poista kun redi
+    DO rset.%Display()
+
+    return $$$OK
 }
 
 }
