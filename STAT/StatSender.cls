@@ -21,7 +21,7 @@ ClassMethod OnMessage(pRequestlastMessageID, pResponse) As %Status
 	Return LastMessageID
 }
 
-ClassMethod PostJSON()
+ClassMethod PostJSON() As %Status
 {
 	// Kutsutaan StatCollectorista JSONin kanssa, ja odottaa vastauksena listaa tms messageideistä
 	// TODO laita palauttamaan listOfLastMessageID joka tulee vastauksena Post()
