@@ -1,20 +1,24 @@
 Class AMK.DEV1.TransferDB Extends %Persistent
 {
 
-Property Filename As %String;
+Property Filename As %String(MAXLEN = 200);
 
 Property Date As %String;
 
 Property Time As %String;
 
-Property IntegrationName As %String;
+Property ProductionName As %String;
+
+Property IntegrationNro As %String;
+
+Property TimeStamp As %TimeStamp;
 
 Method OnMessage(pRequest As AMK.DEV1.SuccessChecker, Output pResponse As %Persistent) As %Status
 {
-	Set DB = ..AddToData(pRequest.Filename, pRequest.TimeStamp, pRequest.IntegrationName)
+	Set DB = ..AddToData(pRequest.Filename, pRequest.TimeStamp, pRequest.ProductionName)
 }
 
-ClassMethod AddToData(oFilename, oDateTime As %Date, oIntegrationName) As AMK.DEV1.TransferDB
+ClassMethod AddToData(oFilename, oDateTime As %Date, oIntegrationName, oIntegrationNro) As AMK.DEV1.TransferDB
 {
 	#Dim Data As AMK.DEV1.TransferDB
 	
@@ -26,7 +30,9 @@ ClassMethod AddToData(oFilename, oDateTime As %Date, oIntegrationName) As AMK.DE
 	//Creating a new Data object and saving it to the Database. Adding all the necessary information as they were passed as to the method. Chopping the Time stamp to Date and Time.
 	Set Data = ##class(AMK.DEV1.TransferDB).%New()
 	Set Data.Filename = oFilename
-	Set Data.IntegrationName = oIntegrationName
+	Set Data.ProductionName = oIntegrationName
+	Set Data.IntegrationNro = oIntegrationNro
+	Set Data.TimeStamp = oDateTime
 	Set Data.Date = $Piece(oDateTime, " ",1)
 	Set Data.Time = $Piece(oDateTime, " ",2)
 	
@@ -58,6 +64,15 @@ Storage Default
 </Value>
 <Value name="7">
 <Value>IntegrationName</Value>
+</Value>
+<Value name="8">
+<Value>IntegrationNro</Value>
+</Value>
+<Value name="9">
+<Value>TimeStamp</Value>
+</Value>
+<Value name="10">
+<Value>ProductionName</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.DEV1.TransferDBD</DataLocation>

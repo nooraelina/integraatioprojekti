@@ -21,7 +21,7 @@ ClassMethod OnMessage(pRequestlastMessageID, pResponse) As %Status
 	Return LastMessageID
 }
 
-ClassMethod PostJSON() As %Status
+ClassMethod PostJSON(jsonMessage As AMK.DEV1.STAT.JSONMessage) As %Status
 {
 	// Kutsutaan StatCollectorista JSONin kanssa, ja odottaa vastauksena listaa tms messageideistä
 	// TODO laita palauttamaan listOfLastMessageID joka tulee vastauksena Post()
@@ -34,21 +34,26 @@ ClassMethod PostJSON() As %Status
 	
 	///Tekee HTTP pyynnön ja post() JSON
 	Set RequestJSON= ##class(%Net.HttpRequest).%New()
-	Set RequestJSON.Server = "serveri"
+	Set RequestJSON.Server = "localhost"
+	Set RequestJSON.Port = 52773
 	Set RequestJSON.Location = "location"
-	Set RequestJSON.Https = 1
-	Set RequestJSON.SSLConfiguration = "SSLConfig"
 	Set RequestJSON.ContentType = "application/json"
-	Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(Request.EntityBody,  Body)	
-	Set Status = RequestJSON.Post()
+	Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(Request.EntityBody,  jsonMessage)	
+	Set Status = RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
 	
 	Return ListMessageID
 }
 
-/* Käytössä vaan testausta varten*/
+/* Toimii niinku pitää ja StatFinder kutsuu tätä oikein*/
 ClassMethod GetLastMessageID() As %Integer
 {
-    Set LastMessageID = 108
+    set IDrequest = ##class(%Net.HttpRequest).%New()
+	set IDrequest.Server = "localhost"
+	set IDrequest.Port = 52773
+	Do IDrequest.Get("/rest/statdataupdater/getlastmessageid/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
+	set response = IDrequest.HttpResponse
+	set dynObj = {}.%FromJSON(response.Data)
+	set LastMessageID = dynObj.%Get("LastMessageID")
     Return LastMessageID
 }
 

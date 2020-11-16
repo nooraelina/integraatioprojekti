@@ -1,4 +1,4 @@
-Class AMK.DEV1.STAT.StatCollector Extends Ens.InboundAdapter
+Class AMK.DEV1.STAT.StatCollector Extends (Ens.InboundAdapter, Ens.BusinessService)
 {
 
 Property Adapter As Ens.InboundAdapter;
@@ -6,7 +6,7 @@ Property Adapter As Ens.InboundAdapter;
 Parameter ADAPTER = "Ens.InboundAdapter";
 
 /// ProcessInput should be called based to CallInterval setting (from Ens.InboundAdapter)
-ClassMethod OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
+Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
     #Dim count
     

@@ -1,15 +1,17 @@
 Class AMK.DEV1.SuccessChecker Extends %Persistent
 {
 
-Property Filename As %String;
+Property Filename As %String(MAXLEN = 200);
 
-Property OriginalFileName As %String;
+Property OriginalFileName As %String(MAXLEN = 200);
 
 Property IntegrationName As %String;
 
 Property Mailtype As %Integer;
 
 Property TimeStamp As %String;
+
+Property IntegrationNro As %String;
 
 Parameter ADAPTER = "Ens.BusinessOperation";
 
@@ -21,6 +23,7 @@ Method CheckFileOut(tFilename As %String)
 	If ##class(%File).Exists(tFilename){
 		
 		Set ..IntegrationName = $GET(^Ens.Configuration("csp","LastProduction"))
+		Set ..IntegrationNro = $GET(^Ens.LookupTable("IntegrationNro","From_Src_File"))
 		Set ..Mailtype = 1
 		
 		//Creating a new instance of %File class in order to check the creation date of the file later
@@ -30,7 +33,7 @@ Method CheckFileOut(tFilename As %String)
 		Set ..Filename = ##class(%File).GetFilename(tFilename)
 		
 		//Passing required information to the TransferDB class for information storing to database
-		Set DB = ##Class(AMK.DEV1.TransferDB).AddToData(..Filename, ..TimeStamp, ..IntegrationName)
+		Set DB = ##Class(AMK.DEV1.TransferDB).AddToData(..Filename, ..TimeStamp, ..IntegrationName, ..IntegrationNro)
 
 		Quit
 	}Else{
@@ -45,7 +48,7 @@ Method PreCheck(pFilename, pFile) As %String
 	Done by using pFilename(cPath) passed from PassthroughOperation2's OnMessage method*/
 	If ##class(%File).Exists(pFilename){
 		
-		Set IntegrationName = "AMK1.1"
+		Set IntegrationName = $GET(^Ens.Configuration("csp","LastProduction"))
 		Set ..Mailtype = 2
 		Set ..OriginalFileName = pFile
 		
@@ -85,6 +88,9 @@ Storage Default
 </Value>
 <Value name="7">
 <Value>OriginalFileName</Value>
+</Value>
+<Value name="8">
+<Value>IntegrationNro</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.DEV1.SuccessCheckerD</DataLocation>

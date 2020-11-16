@@ -1,4 +1,4 @@
-Class AMK.DEV1.STAT.StatFinder Extends %Persistent
+Class AMK.DEV1.STAT.StatFinder Extends (Ens.BusinessService, %Persistent)
 {
 
 Property LastMessageID As %Integer;
