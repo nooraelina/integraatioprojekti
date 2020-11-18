@@ -21,16 +21,12 @@ ClassMethod OnMessage(pRequestlastMessageID, pResponse) As %Status
 	Return LastMessageID
 }
 
-ClassMethod PostJSON(jsonMessage As AMK.DEV1.STAT.JSONMessage) As %Status
+ClassMethod PostJSON(jsonMessage As %ListOfObjects) As %Status
 {
 	// Kutsutaan StatCollectorista JSONin kanssa, ja odottaa vastauksena listaa tms messageideistä
 	// TODO laita palauttamaan listOfLastMessageID joka tulee vastauksena Post()
 	
-	Set Body =  ##Class(AMK.DEV1.StatCollector).CreateJSON()
-	
 	///Wrappaa JSONin sisällön [] sisään, löyty foorumipostista en tiedä onko hyödyllinen/välttämätön
-	set List = ##class(%ListOfObjects).%New()
-	Do List.Insert(Body)
 	
 	///Tekee HTTP pyynnön ja post() JSON
 	Set RequestJSON= ##class(%Net.HttpRequest).%New()
@@ -38,7 +34,7 @@ ClassMethod PostJSON(jsonMessage As AMK.DEV1.STAT.JSONMessage) As %Status
 	Set RequestJSON.Port = 52773
 	Set RequestJSON.Location = "location"
 	Set RequestJSON.ContentType = "application/json"
-	Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(Request.EntityBody,  jsonMessage)	
+	Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(RequestJSON.EntityBody,  jsonMessage)
 	Set Status = RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
 	
 	Return ListMessageID

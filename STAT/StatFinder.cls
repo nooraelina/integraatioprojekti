@@ -34,6 +34,8 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     Quit task
 }
 
+/*  Creates all StatEntryDB objects from LastmessageID till the end of the TransferDB
+    needs a fail handling with try catch */
 Method UpdateStatEntryDB() As %Status
 {
     Set status = $$$OK

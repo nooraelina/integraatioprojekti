@@ -33,18 +33,19 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
 
 ClassMethod CreateJSON() As %Status
 {
-    Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
 
     // get every MessageID and add that to a list
     Set tGetMsgID = "SELECT MessageID FROM AMK_DEV1_STAT.StatEntryDB"
     Set tStatement = ##class(%SQL.Statement).%New()
     Set qStatus = tStatement.%Prepare(tGetMsgID)
-    If qStatus '= 1 {WRITE "Failed" DO $System.Status.DisplayError(qStatus) QUIT}
+    If qStatus '= 1 {WRITE "Failed1" DO $System.Status.DisplayError(qStatus) QUIT}
     Set rset = tStatement.%Execute()
-    Set a = "SELECT * FROM AMK_DEV1_STAT.StatEntryDB WHERE MessageID = "
+    Set a = "SELECT * FROM AMK_DEV1_STAT.StatEntryDB WHERE MessageID = '"
     Set c = "'"
+    set List = ##class(%ListOfObjects).%New()
 
     WHILE rset.%Next() {
+        Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
         Set messageId = rset.%GetData(1)
 
         // SQL haku messageidllä muiden tietojen saamiseksi
@@ -52,25 +53,26 @@ ClassMethod CreateJSON() As %Status
         Set query2 = a_b_c
         Set tStatement = ##class(%SQL.Statement).%New()
         Set qStatus2 = tStatement.%Prepare(query2)
-        If qStatus2 '= 1 {WRITE "Failed" DO $System.Status.DisplayError(qStatus) QUIT}
+        If qStatus2 '= 1 {WRITE "Failed2" DO $System.Status.DisplayError(qStatus) QUIT}
         Set rset2 = tStatement.%Execute()
         do rset2.%Next()
 
         // TODO lisää oikeat numerot getdatoihin
-        Set jsonObject.IntegrationName = rset2.%GetData(1)
-        Set jsonObject.Hostname = rset2.%GetData()
-        Set jsonObject.ProductionName = rset2.%GetData()
-        Set jsonObject.Status = rset2.%GetData()
-        Set jsonObject.Filename = rset2.%GetData()
-        Set jsonObject.TimeStamp = rset2.%GetData()
-        Set jsonObject.MessageID = rset2.%GetData()
+        Set jsonObject.IntegrationName = rset2.%GetData(3)
+        Set jsonObject.Hostname = rset2.%GetData(2)
+        Set jsonObject.ProductionName = rset2.%GetData(5)
+        Set jsonObject.Status = rset2.%GetData(6)
+        Set jsonObject.TimeStamp = rset2.%GetData(7)
+        Set jsonObject.MessageID = rset2.%GetData(4)
+
+        Do List.Insert(jsonObject)
 
     }
     
     // Show in terminal the jsonobject
     Do jsonObject.%JSONExport()        
     
-    return jsonObject
+    return List
 }
 
 ClassMethod DeleteStatEntries(listOfMessageIds) As %Status

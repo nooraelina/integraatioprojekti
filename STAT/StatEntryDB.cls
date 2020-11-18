@@ -11,8 +11,6 @@ Property TimeStamp As %TimeStamp;
 
 Property Status As %Boolean;
 
-Property Filename As %String(MAXLEN = 200);
-
 Property MessageID As %Integer;
 
 ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.StatEntryDB
@@ -26,7 +24,6 @@ ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.Sta
     Set Data.HostName = $SYSTEM.INetInfo.LocalHostName()
     Set Data.ProductionName = TransferDB.IntegrationName
     Set Data.Status = 1
-    Set Data.Filename = TransferDB.Filename
 
     Do Data.%Save()
 
