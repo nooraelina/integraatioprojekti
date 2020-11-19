@@ -33,7 +33,8 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
 
 ClassMethod CreateJSON() As %Status
 {
-
+    //set List = ##class(%ListOfObjects).%New()
+    set jsonLista = $LISTBUILD("json")
     // get every MessageID and add that to a list
     Set tGetMsgID = "SELECT MessageID FROM AMK_DEV1_STAT.StatEntryDB"
     Set tStatement = ##class(%SQL.Statement).%New()
@@ -42,12 +43,11 @@ ClassMethod CreateJSON() As %Status
     Set rset = tStatement.%Execute()
     Set a = "SELECT * FROM AMK_DEV1_STAT.StatEntryDB WHERE MessageID = '"
     Set c = "'"
-    set List = ##class(%ListOfObjects).%New()
 
     WHILE rset.%Next() {
         Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
         Set messageId = rset.%GetData(1)
-
+        
         // SQL haku messageidllä muiden tietojen saamiseksi
         Set b = messageId
         Set query2 = a_b_c
@@ -64,15 +64,18 @@ ClassMethod CreateJSON() As %Status
         Set jsonObject.Status = rset2.%GetData(6)
         Set jsonObject.TimeStamp = rset2.%GetData(7)
         Set jsonObject.MessageID = rset2.%GetData(4)
-
-        Do List.Insert(jsonObject)
-
+        
+        do jsonObject.%JSONExportToString(.string)
+        set $LIST(jsonLista, *+1) = string
+        
     }
+
+    Set datajson = {}
+    Set datajson.data = jsonLista
+
+    WRITE !,jsonLista, !, !, !, "return data: ", datajson.%ToJSON()
     
-    // Show in terminal the jsonobject
-    Do jsonObject.%JSONExport()        
-    
-    return List
+    return datajson
 }
 
 ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
