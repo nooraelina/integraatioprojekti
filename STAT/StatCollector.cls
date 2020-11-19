@@ -5,6 +5,10 @@ Property Adapter As Ens.InboundAdapter;
 
 Parameter ADAPTER = "Ens.InboundAdapter";
 
+Property MessageProcessLimit As %Integer;
+
+Parameter SETTINGS = "MessageProcessLimit:Basic";
+
 /// ProcessInput should be called based to CallInterval setting (from Ens.InboundAdapter)
 Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
@@ -20,25 +24,31 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
         Set count = rset.%GetData(1)
     }
     If count = 0 {WRITE "No entries waiting to be processed. Quitting." QUIT}
-    Set jsonMessage = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON()
+
+    // Get the user-defined message process limit from settings
+    set tMsgProcessLimit = $GET($$$ConfigProdSetting("MessageProcessLimit"))
+
+    Set jsonMessage = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON(tMsgProcessLimit)
 
     // Call StatSender with jsonMessage
     Set listOfMessageIds = ##class(AMK.DEV1.STAT.StatSender).PostJSON(jsonMessage)
 
-    // TODO Call DeleteStatEntries with StatSender response
+    // Call DeleteStatEntries with StatSender response
     Set tStatus = ##class(AMK.DEV1.STAT.StatCollector).DeleteStatEntries(listOfMessageIds)
 
     WRITE !, tStatus
 }
 
-ClassMethod CreateJSON() As %Status
+ClassMethod CreateJSON(tMsgProcessLimit) As %Status
 {
     //set List = ##class(%ListOfObjects).%New()
     set jsonLista = $LISTBUILD("json")
     // get every MessageID and add that to a list
-    Set tGetMsgID = "SELECT MessageID FROM AMK_DEV1_STAT.StatEntryDB"
+    Set tGetMsgID = "SELECT TOP "
+    Set tGetMsgID2 = " MessageID FROM AMK_DEV1_STAT.StatEntryDB"
+    Set tGetMsgIDquery = tGetMsgID_tMsgProcessLimit_tGetMsgID2
     Set tStatement = ##class(%SQL.Statement).%New()
-    Set qStatus = tStatement.%Prepare(tGetMsgID)
+    Set qStatus = tStatement.%Prepare(tGetMsgIDquery)
     If qStatus '= 1 {WRITE "Failed1" DO $System.Status.DisplayError(qStatus) QUIT}
     Set rset = tStatement.%Execute()
     Set a = "SELECT * FROM AMK_DEV1_STAT.StatEntryDB WHERE MessageID = '"
@@ -85,7 +95,7 @@ ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
 
     // Create SQL statement, ? = list
     SET myquery="DELETE FROM AMK_DEV1.TransferDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
-                "WHERE ID %INLIST ?" // WHERE MessageID = "
+                "WHERE ID %INLIST ?" // WHERE MessageID %INLIST ?"
     SET tStatement = ##class(%SQL.Statement).%New()
     SET qStatus = tStatement.%Prepare(myquery)
         IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}
