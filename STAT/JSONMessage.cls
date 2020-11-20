@@ -3,7 +3,7 @@ Class AMK.DEV1.STAT.JSONMessage Extends (%Persistent, %JSON.Adaptor)
 
 Property IntegrationName As %String(%JSONFIELDNAME = "integrationName");
 
-Property Hostname As %String(%JSONFIELDNAME = "hostName");
+Property HostName As %String(%JSONFIELDNAME = "hostName");
 
 Property ProductionName As %String(%JSONFIELDNAME = "productionName");
 
@@ -41,6 +41,9 @@ Storage Default
 </Value>
 <Value name="8">
 <Value>MessageID</Value>
+</Value>
+<Value name="9">
+<Value>HostName</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.DEV1.STAT.JSONMessageD</DataLocation>

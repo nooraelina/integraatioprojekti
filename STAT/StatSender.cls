@@ -21,7 +21,7 @@ ClassMethod OnMessage(pRequestlastMessageID, pResponse) As %Status
 	Return LastMessageID
 }
 
-ClassMethod PostJSON(jsonMessage As %ListOfObjects) As %Status
+ClassMethod PostJSON(jsonMessage As %String) As %Status
 {
 	// Kutsutaan StatCollectorista JSONin kanssa, ja odottaa vastauksena listaa tms messageideistä
 	// TODO laita palauttamaan listOfLastMessageID joka tulee vastauksena Post()
@@ -32,12 +32,13 @@ ClassMethod PostJSON(jsonMessage As %ListOfObjects) As %Status
 	Set RequestJSON= ##class(%Net.HttpRequest).%New()
 	Set RequestJSON.Server = "localhost"
 	Set RequestJSON.Port = 52773
-	Set RequestJSON.Location = "location"
-	Set RequestJSON.ContentType = "application/json"
-	Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(RequestJSON.EntityBody,  jsonMessage)
-	Set Status = RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
+	//Set RequestJSON.ContentType = "application/json"
+	Do RequestJSON.EntityBody.Write(jsonMessage)
+	//Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(RequestJSON.EntityBody, jsonMessage)
+	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")),2)
+	set response = RequestJSON.HttpResponse
 	
-	Return ListMessageID
+	Return response
 }
 
 /* Toimii niinku pitää ja StatFinder kutsuu tätä oikein*/

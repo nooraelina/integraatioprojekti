@@ -42,6 +42,7 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
 ClassMethod CreateJSON(tMsgProcessLimit) As %Status
 {
     //set List = ##class(%ListOfObjects).%New()
+    set tMsgProcessLimit = 4
     set jsonLista = $LISTBUILD("json")
     // get every MessageID and add that to a list
     Set tGetMsgID = "SELECT TOP "
@@ -53,9 +54,10 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %Status
     Set rset = tStatement.%Execute()
     Set a = "SELECT * FROM AMK_DEV1_STAT.StatEntryDB WHERE MessageID = '"
     Set c = "'"
+    Set tArr = []
 
     WHILE rset.%Next() {
-        Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
+        //Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
         Set messageId = rset.%GetData(1)
         
         // SQL haku messageidllä muiden tietojen saamiseksi
@@ -67,25 +69,38 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %Status
         Set rset2 = tStatement.%Execute()
         do rset2.%Next()
 
-        // TODO lisää oikeat numerot getdatoihin
+        /* TODO lisää oikeat numerot getdatoihin
         Set jsonObject.IntegrationName = rset2.%GetData(3)
-        Set jsonObject.Hostname = rset2.%GetData(2)
+        Set jsonObject.HostName = rset2.%GetData(2)
         Set jsonObject.ProductionName = rset2.%GetData(5)
         Set jsonObject.Status = rset2.%GetData(6)
         Set jsonObject.TimeStamp = rset2.%GetData(7)
         Set jsonObject.MessageID = rset2.%GetData(4)
+        */
+        Do tArr.%Push({
+            "IntegrationName":      (rset2.%GetData(3)),
+            "HostName":             (rset2.%GetData(2)),
+            "ProductionName":       (rset2.%GetData(5)),
+            "Status":               (rset2.%GetData(6)),
+            "TimeStamp":            (rset2.%GetData(7)),
+            "MessageID":            (rset2.%GetData(4))
+        })
         
-        do jsonObject.%JSONExportToString(.string)
-        set $LIST(jsonLista, *+1) = string
+        //do jsonObject.%JSONExportToString(.string)
+        //set $LIST(jsonLista, *+1) = string
         
     }
 
-    Set datajson = {}
-    Set datajson.data = jsonLista
+    //Set datajson = {}
+    //Set datajson.data = jsonLista
 
-    WRITE !,jsonLista, !, !, !, "return data: ", datajson.%ToJSON()
+    //WRITE !,jsonLista, !, !, !, "return data: ", datajson.%ToJSON()
+
+    Set jsonMessage = tArr.%ToJSON()
+
+    //Set returnList = datajson.%ToJSON()
     
-    return datajson
+    return jsonMessage
 }
 
 ClassMethod DeleteStatEntries(listOfMessageIds) As %Status

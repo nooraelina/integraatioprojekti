@@ -8,7 +8,7 @@ XData UrlMap [ XMLNamespace = "http://www.intersystems.com/urlmap" ]
 <Routes>
 	<Route Url="/test" Method="GET" Call="Test"/>
 	<Route Url="/getlastmessageid/:id" Method="GET" Call="GetLastMessageID" />
-	<Route Url="/addtodb/:integration" Method="POST" Call="AddtoDB" />
+	<Route Url="/addtodb/:id" Method="POST" Call="AddtoDB" />
 </Routes>
 }
 
@@ -31,6 +31,31 @@ ClassMethod GetLastMessageID(id As %String) As %Status
 	do rset.%Next()
 	set LastMessageID = rset.%GetData(1)
 	do result.%Set("LastMessageID", LastMessageID)
+	write result.%ToJSON()
+	Quit result
+}
+
+ClassMethod AddtoDB(id As %String) As %Status
+{
+	Set result = {}
+	Set TableName = $GET(^Ens.LookupTable("GetTable",id))
+	Set dynObj = {}.%FromJSON(%request.Content)
+	set iter = dynObj.%GetIterator() 
+	while iter.%GetNext(.key , .value) {
+		/// How to call a certain class? now it is just calling DB1
+		Set cm = ##class(AMK.STAT.StatDB.DB1).%New()
+		Set cm.IntegrationNro = value.IntegrationName
+		Set cm.HostName = value.HostName
+		Set cm.ProductionName = value.ProductionName
+		Set cm.Status = value.Status
+		Set cm.TimeStamp = value.TimeStamp
+		Set cm.MessageID = value.MessageID
+
+		Do cm.%Save()
+	}
+
+	//do result.%Set("Status",$s($$$ISERR(sc):$system.Status.GetOneErrorText(sc),1:"OK"))
+	do result.%Set("Status","OK")
 	write result.%ToJSON()
 	Quit result
 }

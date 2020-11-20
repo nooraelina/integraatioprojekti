@@ -11,6 +11,8 @@ Property TimeStamp As %TimeStamp;
 
 Property HostName As %String;
 
+Property Status As %Boolean;
+
 Storage Default
 {
 <Data name="DB1DefaultData">
@@ -31,6 +33,9 @@ Storage Default
 </Value>
 <Value name="6">
 <Value>HostName</Value>
+</Value>
+<Value name="7">
+<Value>Status</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.STAT.StatDB.DB1D</DataLocation>
