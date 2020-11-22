@@ -22,7 +22,7 @@ ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.Sta
     Set Data.MessageID = TransferDB.%Id()
     Set Data.IntegrationNro = TransferDB.IntegrationNro
     Set Data.HostName = $SYSTEM.INetInfo.LocalHostName()
-    Set Data.ProductionName = TransferDB.IntegrationName
+    Set Data.ProductionName = TransferDB.ProductionName
     Set Data.Status = 1
 
     Do Data.%Save()

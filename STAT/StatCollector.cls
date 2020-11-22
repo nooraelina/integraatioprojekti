@@ -106,11 +106,11 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %Status
 ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
 {
     // Väliaikainen lista testaukseen, tää lista tarkotus saada toisesta produktiosta
-    SET listOfMessageIds=$LISTBUILD(2,4)
+    //SET listOfMessageIds=$LISTBUILD(2,4)
 
     // Create SQL statement, ? = list
-    SET myquery="DELETE FROM AMK_DEV1.TransferDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
-                "WHERE ID %INLIST ?" // WHERE MessageID %INLIST ?"
+    SET myquery="DELETE FROM AMK_DEV1_STAT.StatEntryDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
+                "WHERE NOT MessageID %INLIST ?" // WHERE MessageID %INLIST ?"
     SET tStatement = ##class(%SQL.Statement).%New()
     SET qStatus = tStatement.%Prepare(myquery)
         IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}

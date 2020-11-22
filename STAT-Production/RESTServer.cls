@@ -38,11 +38,13 @@ ClassMethod GetLastMessageID(id As %String) As %Status
 ClassMethod AddtoDB(id As %String) As %Status
 {
 	Set result = {}
+	Set i = 1
 	Set TableName = $GET(^Ens.LookupTable("GetTable",id))
 	Set dynObj = {}.%FromJSON(%request.Content)
 	set iter = dynObj.%GetIterator() 
 	while iter.%GetNext(.key , .value) {
 		/// How to call a certain class? now it is just calling DB1
+		try {
 		Set cm = ##class(AMK.STAT.StatDB.DB1).%New()
 		Set cm.IntegrationNro = value.IntegrationName
 		Set cm.HostName = value.HostName
@@ -52,10 +54,16 @@ ClassMethod AddtoDB(id As %String) As %Status
 		Set cm.MessageID = value.MessageID
 
 		Do cm.%Save()
+		}
+		catch err {
+			do result.%Set("FailedID"_i, value.MessageID)
+		}
+
+		set i=i+1
 	}
 
 	//do result.%Set("Status",$s($$$ISERR(sc):$system.Status.GetOneErrorText(sc),1:"OK"))
-	do result.%Set("Status","OK")
+	//do result.%Set("FailedID", 119)
 	write result.%ToJSON()
 	Quit result
 }

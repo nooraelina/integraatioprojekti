@@ -37,8 +37,17 @@ ClassMethod PostJSON(jsonMessage As %String) As %Status
 	//Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(RequestJSON.EntityBody, jsonMessage)
 	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")),2)
 	set response = RequestJSON.HttpResponse
+	set dynObj = {}.%FromJSON(response.Data)
+	set iter = dynObj.%GetIterator()
+	set failedList = $Listbuild()
+	set i=1
+	while iter.%GetNext(.key, .value) {
+		set $LIST(failedList, i) = value
+		set i = i+1
+
+	}
 	
-	Return response
+	Return failedList
 }
 
 /* Toimii niinku pitää ja StatFinder kutsuu tätä oikein*/
