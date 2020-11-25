@@ -10,7 +10,6 @@ Property MessageProcessLimit As %Integer;
 
 Parameter SETTINGS = "MessageProcessLimit:Basic";
 
-/// ProcessInput should be called based to CallInterval setting (from Ens.InboundAdapter)
 Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
     #Dim count
@@ -44,14 +43,11 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     // Call DeleteStatEntries with StatSender response
     Set tStatus = ##class(AMK.DEV1.STAT.StatCollector).DeleteStatEntries(listOfMessageIds)
 
-    WRITE !, tStatus
     Return tStatus
 }
 
 ClassMethod CreateJSON(tMsgProcessLimit) As %String
 {
-    //set List = ##class(%ListOfObjects).%New()
-    set jsonLista = $LISTBUILD("json")
     // get every MessageID and add that to a list
     Set tGetMsgID = "SELECT TOP "
     Set tGetMsgID2 = " MessageID FROM AMK_DEV1_STAT.StatEntryDB"
@@ -65,7 +61,6 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %String
     Set tArr = []
 
     WHILE rset.%Next() {
-        //Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
         Set messageId = rset.%GetData(1)
         
         // SQL haku messageidllä muiden tietojen saamiseksi
@@ -77,14 +72,6 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %String
         Set rset2 = tStatement.%Execute()
         do rset2.%Next()
 
-        /* TODO lisää oikeat numerot getdatoihin
-        Set jsonObject.IntegrationName = rset2.%GetData(3)
-        Set jsonObject.HostName = rset2.%GetData(2)
-        Set jsonObject.ProductionName = rset2.%GetData(5)
-        Set jsonObject.Status = rset2.%GetData(6)
-        Set jsonObject.TimeStamp = rset2.%GetData(7)
-        Set jsonObject.MessageID = rset2.%GetData(4)
-        */
         Do tArr.%Push({
             "IntegrationNro":      (rset2.%Get("IntegrationNro")),
             "HostName":             (rset2.%Get("HostName")),
@@ -93,40 +80,24 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %String
             "TimeStamp":            (rset2.%Get("TimeStamp")),
             "MessageID":            (rset2.%Get("MessageID"))
         })
-        
-        //do jsonObject.%JSONExportToString(.string)
-        //set $LIST(jsonLista, *+1) = string
-        
+                
     }
 
-    //Set datajson = {}
-    //Set datajson.data = jsonLista
-
-    //WRITE !,jsonLista, !, !, !, "return data: ", datajson.%ToJSON()
-
     Set jsonMessage = tArr.%ToJSON()
-
-    //Set returnList = datajson.%ToJSON()
     
     return jsonMessage
 }
 
 ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
 {
-    // Väliaikainen lista testaukseen, tää lista tarkotus saada toisesta produktiosta
-    //SET listOfMessageIds=$LISTBUILD(2,4)
-
     // Create SQL statement, ? = list
-    SET myquery="DELETE FROM AMK_DEV1_STAT.StatEntryDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
-                "WHERE MessageID %INLIST ?" // WHERE MessageID %INLIST ?"
+    SET myquery="DELETE FROM AMK_DEV1_STAT.StatEntryDB "_
+                "WHERE MessageID %INLIST ?"
     SET tStatement = ##class(%SQL.Statement).%New()
     SET qStatus = tStatement.%Prepare(myquery)
         IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}
     SET rset = tStatement.%Execute(listOfMessageIds)
-
-    // Tämäkin testauksen ajaksi, poista kun redi
-    DO rset.%Display()
-
+    
     return $$$OK
 }
 
