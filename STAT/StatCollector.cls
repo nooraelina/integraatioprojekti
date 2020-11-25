@@ -1,10 +1,11 @@
-Class AMK.DEV1.STAT.StatCollector Extends (Ens.InboundAdapter, Ens.BusinessService)
+Class AMK.DEV1.STAT.StatCollector Extends Ens.BusinessService
 {
 
 Property Adapter As Ens.InboundAdapter;
 
 Parameter ADAPTER = "Ens.InboundAdapter";
 
+/// Max amount of messages processed per Interval
 Property MessageProcessLimit As %Integer;
 
 Parameter SETTINGS = "MessageProcessLimit:Basic";
@@ -23,11 +24,18 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     WHILE rset.%Next(){
         Set count = rset.%GetData(1)
     }
-    If count = 0 {WRITE "No entries waiting to be processed. Quitting." QUIT}
+    If count = 0 {
+        $$$TRACE("No entries waiting to be processed. Quitting.") 
+        DO $System.Status.DisplayError(qStatus)
+        set returnvalue = 1
+        QUIT returnvalue
+        }
 
     // Get the user-defined message process limit from settings
-    set tMsgProcessLimit = $GET($$$ConfigProdSetting("MessageProcessLimit"))
+    set tMsgProcessLimit = ..MessageProcessLimit
 
+    //set tMsgProcessLimit = 10
+    $$$TRACE("Entries found. Creating JSON for sending")
     Set jsonMessage = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON(tMsgProcessLimit)
 
     // Call StatSender with jsonMessage
@@ -37,12 +45,12 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     Set tStatus = ##class(AMK.DEV1.STAT.StatCollector).DeleteStatEntries(listOfMessageIds)
 
     WRITE !, tStatus
+    Return tStatus
 }
 
-ClassMethod CreateJSON(tMsgProcessLimit) As %Status
+ClassMethod CreateJSON(tMsgProcessLimit) As %String
 {
     //set List = ##class(%ListOfObjects).%New()
-    set tMsgProcessLimit = 4
     set jsonLista = $LISTBUILD("json")
     // get every MessageID and add that to a list
     Set tGetMsgID = "SELECT TOP "
@@ -78,12 +86,12 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %Status
         Set jsonObject.MessageID = rset2.%GetData(4)
         */
         Do tArr.%Push({
-            "IntegrationName":      (rset2.%GetData(3)),
-            "HostName":             (rset2.%GetData(2)),
-            "ProductionName":       (rset2.%GetData(5)),
-            "Status":               (rset2.%GetData(6)),
-            "TimeStamp":            (rset2.%GetData(7)),
-            "MessageID":            (rset2.%GetData(4))
+            "IntegrationNro":      (rset2.%Get("IntegrationNro")),
+            "HostName":             (rset2.%Get("HostName")),
+            "ProductionName":       (rset2.%Get("ProductionName")),
+            "Status":               (rset2.%Get("Status")),
+            "TimeStamp":            (rset2.%Get("TimeStamp")),
+            "MessageID":            (rset2.%Get("MessageID"))
         })
         
         //do jsonObject.%JSONExportToString(.string)
@@ -110,7 +118,7 @@ ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
 
     // Create SQL statement, ? = list
     SET myquery="DELETE FROM AMK_DEV1_STAT.StatEntryDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
-                "WHERE NOT MessageID %INLIST ?" // WHERE MessageID %INLIST ?"
+                "WHERE MessageID %INLIST ?" // WHERE MessageID %INLIST ?"
     SET tStatement = ##class(%SQL.Statement).%New()
     SET qStatus = tStatement.%Prepare(myquery)
         IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}
@@ -120,6 +128,27 @@ ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
     DO rset.%Display()
 
     return $$$OK
+}
+
+Storage Default
+{
+<Data name="StatCollectorDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Adapter</Value>
+</Value>
+<Value name="3">
+<Value>MessageProcessLimit</Value>
+</Value>
+</Data>
+<DataLocation>^AMK.DEV1.STAT.StatCollectorD</DataLocation>
+<DefaultData>StatCollectorDefaultData</DefaultData>
+<IdLocation>^AMK.DEV1.STAT.StatCollectorD</IdLocation>
+<IndexLocation>^AMK.DEV1.STAT.StatCollectorI</IndexLocation>
+<StreamLocation>^AMK.DEV1.STAT.StatCollectorS</StreamLocation>
+<Type>%Storage.Persistent</Type>
 }
 
 }

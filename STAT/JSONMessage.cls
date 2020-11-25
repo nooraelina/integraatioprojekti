@@ -1,19 +1,13 @@
 Class AMK.DEV1.STAT.JSONMessage Extends (%Persistent, %JSON.Adaptor)
 {
 
-Property IntegrationName As %String(%JSONFIELDNAME = "integrationName");
+Property MessageID As %Integer;
 
-Property HostName As %String(%JSONFIELDNAME = "hostName");
+Property RequestType As %Integer;
 
-Property ProductionName As %String(%JSONFIELDNAME = "productionName");
+Property Message As %String;
 
-Property Status As %Boolean(%JSONFIELDNAME = "status");
-
-Property Filename As %String(%JSONFIELDNAME = "filename");
-
-Property TimeStamp As %TimeStamp(%JSONFIELDNAME = "timeStamp");
-
-Property MessageID As %Integer(%JSONFIELDNAME = "messageID");
+Property Result As %String;
 
 Storage Default
 {
@@ -44,6 +38,15 @@ Storage Default
 </Value>
 <Value name="9">
 <Value>HostName</Value>
+</Value>
+<Value name="10">
+<Value>Message</Value>
+</Value>
+<Value name="11">
+<Value>Result</Value>
+</Value>
+<Value name="12">
+<Value>RequestType</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.DEV1.STAT.JSONMessageD</DataLocation>

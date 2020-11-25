@@ -30,6 +30,17 @@ ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.Sta
     Return 1
 }
 
+ClassMethod GetLargestID() As %Integer
+{
+    set query = "SELECT TOP 1 MessageID FROM AMK_DEV1_STAT.StatEntryDB ORDER By MessageID DESC"
+    set tStatement = ##Class(%SQL.Statement).%New()
+    set qStatus = tStatement.%Prepare(query)
+    set rset = tStatement.%Execute()
+    do rset.%Next()
+    set LargestID = rset.%GetData(1)
+    return LargestID
+}
+
 Storage Default
 {
 <Data name="StatEntryDBDefaultData">

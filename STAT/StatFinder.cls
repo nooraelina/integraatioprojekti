@@ -1,4 +1,5 @@
-Class AMK.DEV1.STAT.StatFinder Extends %Persistent
+/// Updates the StatEntryDB with new objects based on the latest MessageID recieved from STAT-Database
+Class AMK.DEV1.STAT.StatFinder Extends Ens.BusinessService
 {
 
 Property LastMessageID As %Integer;
@@ -14,7 +15,11 @@ Parameter ADAPTER = "Ens.InboundAdapter";
 Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
     //Getting the ID of the latest message saved in STAT Database. Asking LastMessageID through StatSender process
-    set ..LastMessageID = ##Class(AMK.DEV1.STAT.StatSender).GetLastMessageID()
+    Set JSONMessage = ##class(AMK.DEV1.STAT.JSONMessage).%New()
+    Set JSONMessage.RequestType = 1
+    Do ..SendRequestSync("StatSender", JSONMessage, .pResponse)
+    Set ..LastMessageID = pResponse.MessageID
+    $$$TRACE("LastMessageID is "_..LastMessageID)
 
     //Getting the ID of the latest message saved to local Database
     set query = "SELECT TOP 1 ID FROM AMK_DEV1.TransferDB ORDER By ID DESC"
@@ -25,10 +30,12 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     Set ..TransferDBID = rset.%GetData(1)
 
     if ..LastMessageID '= ..LatestMessageID {
+        $$$TRACE("Updating StatEntryDB")
         Set task = ..UpdateStatEntryDB()
         Set ..LatestMessageID = ..LastMessageID
-    } else{
+    } else {
         Set task = 1
+        $$$TRACE("STAT-Database up to date, Quitting.")
         Quit task
     }
     Quit task
@@ -39,8 +46,24 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
 Method UpdateStatEntryDB() As %Status
 {
     Set status = $$$OK
-    Set x = ..LastMessageID + 1
+    Set EntryDBID = ##class(AMK.DEV1.STAT.StatEntryDB).GetLargestID()
+    If EntryDBID > ..LastMessageID{
+        Set x = EntryDBID + 1
+    } ElseIf ..LastMessageID > EntryDBID {
+        Set x = ..LastMessageID +1
+    } ElseIf EntryDBID = ..TransferDBID {
+        $$$TRACE("No New Messages to transfer, Quitting.")
+        Quit status
+    } Else {
+        $$$TRACE("No New Messages to transfer, Quitting.")
+        Quit status
+    }
+    
+    
     Set y = ..TransferDBID
+    If x>y{
+        Quit status
+    }
     For {
         Set TransferDBObj = ##class(AMK.DEV1.TransferDB).%OpenId(x)
         Set AddToDB = ##class(AMK.DEV1.STAT.StatEntryDB).AddToEntryDB(TransferDBObj)

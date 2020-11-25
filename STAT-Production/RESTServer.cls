@@ -1,4 +1,4 @@
-Class AMK.STAT.RESTServer Extends (%CSP.REST, %Persistent)
+Class AMK.STAT.RESTServer Extends (%CSP.REST, %Persistent, Ens.BusinessService)
 {
 
 Parameter HandleCorsRequest = 1;
@@ -46,7 +46,7 @@ ClassMethod AddtoDB(id As %String) As %Status
 		/// How to call a certain class? now it is just calling DB1
 		try {
 		Set cm = ##class(AMK.STAT.StatDB.DB1).%New()
-		Set cm.IntegrationNro = value.IntegrationName
+		Set cm.IntegrationNro = value.IntegrationNro
 		Set cm.HostName = value.HostName
 		Set cm.ProductionName = value.ProductionName
 		Set cm.Status = value.Status
@@ -54,9 +54,14 @@ ClassMethod AddtoDB(id As %String) As %Status
 		Set cm.MessageID = value.MessageID
 
 		Do cm.%Save()
+
+		do result.%Set("SavedID"_i, value.MessageID)
 		}
 		catch err {
-			do result.%Set("FailedID"_i, value.MessageID)
+			write !, "Error name: ", ?20, err.Name,
+			!, "Error code: ", ?20, err.Code,
+			!, "Error locatio: ", ?20, err.Location,
+			!, "Additional data: ", ?20, err.Data, !
 		}
 
 		set i=i+1

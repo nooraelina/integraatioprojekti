@@ -1,24 +1,31 @@
-Class AMK.DEV1.STAT.StatSender Extends %Persistent
+Class AMK.DEV1.STAT.StatSender Extends (Ens.BusinessOperation, Ens.OutboundAdapter, Ens.Adapter)
 {
 
 Parameter ADAPTER = "EnsLib.HTTP.OutboundAdapter";
 
-ClassMethod OnMessage(pRequestlastMessageID, pResponse) As %Status
+Property Adapter As EnsLib.HTTP.OutboundAdapter;
+
+Method OnMessage(pRequest As %Persistent, Output pResponse As %Persistent) As %Status
 {
-	
-	///Lähettää pyynnöt HTTP avulla RESTille
-	Set Request= ##class(%Net.HttpRequest).%New()
-	Set Request.Server = "serveri"
-	Set Request.Location = "location"
-	Set Request.Https = 1
-	Set Request.SSLConfiguration = "SSLConfig"
-	Set Status = Request.Get(LastMessageID) ///LastMessageID:n sisältävä page
-	
-	///Do Request.Get(LastMessageID)???
-	
-	///Set Status = Request.Get(..Location,0) Quit:$$$ISERR(tSC) Jotain mitä netistä löyty ,0 ,1 ,2 on testimetodeja
-	///Set LastMessageID = SaatuJutska
-	Return LastMessageID
+	Set status = $$$OK
+	if pRequest.RequestType = 1 {
+		set result = ..GetLastMessageID()
+		$$$TRACE("result = "_result)
+		$$$TRACE("MessageID = "_pRequest.MessageID)
+		Set JSONMessage = ##class(AMK.DEV1.STAT.JSONMessage).%New()
+		Set JSONMessage.MessageID = result
+		set pResponse = JSONMessage
+		Return pResponse
+	} ElseIf pRequest.RequestType = 2 {
+		set message = pRequest.Message
+		set result = ..PostJSON(message)
+		Set JSONMessage = ##class(AMK.DEV1.STAT.JSONMessage).%New()
+		Set JSONMessage.Result = result
+		set pResponse = JSONMessage
+		Return pResponse
+	} Else {
+		Quit status
+	}
 }
 
 ClassMethod PostJSON(jsonMessage As %String) As %Status
@@ -35,28 +42,29 @@ ClassMethod PostJSON(jsonMessage As %String) As %Status
 	//Set RequestJSON.ContentType = "application/json"
 	Do RequestJSON.EntityBody.Write(jsonMessage)
 	//Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(RequestJSON.EntityBody, jsonMessage)
-	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")),2)
+	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
 	set response = RequestJSON.HttpResponse
+
 	set dynObj = {}.%FromJSON(response.Data)
 	set iter = dynObj.%GetIterator()
-	set failedList = $Listbuild()
+	set SavedList = $Listbuild()
 	set i=1
 	while iter.%GetNext(.key, .value) {
-		set $LIST(failedList, i) = value
+		set $LIST(SavedList, i) = value
 		set i = i+1
 
 	}
 	
-	Return failedList
+	Return SavedList
 }
 
 /* Toimii niinku pitää ja StatFinder kutsuu tätä oikein*/
-ClassMethod GetLastMessageID() As %Integer
+Method GetLastMessageID() As %Integer
 {
     set IDrequest = ##class(%Net.HttpRequest).%New()
-	set IDrequest.Server = "localhost"
-	set IDrequest.Port = 52773
-	Do IDrequest.Get("/rest/statdataupdater/getlastmessageid/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
+	set IDrequest.Server = ..Adapter.HTTPServer
+	set IDrequest.Port = ..Adapter.HTTPPort
+	Do IDrequest.Get(..Adapter.URL_"/getlastmessageid/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
 	set response = IDrequest.HttpResponse
 	set dynObj = {}.%FromJSON(response.Data)
 	set LastMessageID = dynObj.%Get("LastMessageID")
