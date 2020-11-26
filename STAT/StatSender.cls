@@ -28,21 +28,19 @@ Method OnMessage(pRequest As %Persistent, Output pResponse As %Persistent) As %S
 	}
 }
 
-ClassMethod PostJSON(jsonMessage As %String) As %Status
+/* tämä tarkoitus muuttaa vielä ClassMetodista Methodiksi, mutta jostain syystä toiminta ei 
+vaan skulannut vaikka lähes täysin identtisellä toiminnolla varustettu GetLastMessageID pelittää */
+/// eli tiedossa olevia hardcodauksia alapuolella
+ClassMethod PostJSON(jsonMessage As %String, integrationNro As %String) As %Status
 {
 	// Kutsutaan StatCollectorista JSONin kanssa, ja odottaa vastauksena listaa tms messageideistä
-	// TODO laita palauttamaan listOfLastMessageID joka tulee vastauksena Post()
-	
-	///Wrappaa JSONin sisällön [] sisään, löyty foorumipostista en tiedä onko hyödyllinen/välttämätön
 	
 	///Tekee HTTP pyynnön ja post() JSON
 	Set RequestJSON= ##class(%Net.HttpRequest).%New()
 	Set RequestJSON.Server = "localhost"
 	Set RequestJSON.Port = 52773
-	//Set RequestJSON.ContentType = "application/json"
 	Do RequestJSON.EntityBody.Write(jsonMessage)
-	//Set Status = ##class(%ZEN.Auxiliary.jsonProvider).%WriteJSONStreamFromObject(RequestJSON.EntityBody, jsonMessage)
-	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_$GET(^Ens.LookupTable("IntegrationNro","From_Src_File")))
+	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_integrationNro)
 	set response = RequestJSON.HttpResponse
 
 	set dynObj = {}.%FromJSON(response.Data)
@@ -58,7 +56,6 @@ ClassMethod PostJSON(jsonMessage As %String) As %Status
 	Return SavedList
 }
 
-/* Toimii niinku pitää ja StatFinder kutsuu tätä oikein*/
 Method GetLastMessageID() As %Integer
 {
     set IDrequest = ##class(%Net.HttpRequest).%New()

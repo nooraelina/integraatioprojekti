@@ -8,15 +8,16 @@ Parameter ADAPTER = "Ens.InboundAdapter";
 /// Max amount of messages processed per Interval
 Property MessageProcessLimit As %Integer;
 
-Parameter SETTINGS = "MessageProcessLimit:Basic";
+Property SourceConfigName As %String;
 
-/// ProcessInput should be called based to CallInterval setting (from Ens.InboundAdapter)
+Parameter SETTINGS = "MessageProcessLimit:Basic, SourceConfigName:Basic:selector?multiSelect=1&context={Ens.ContextSearch/ProductionItems?sources=1&productionName=@productionId}";
+
 Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
     #Dim count
     
     // Get the number of objects from StatEntryDB to check if there is any new statentries (Not sure if needed but left it here anyways)
-    Set query = "SELECT COUNT(MessageID) FROM AMK_DEV1_STAT.StatEntryDB"
+    Set query = "SELECT COUNT(MessageID) FROM AMK_DEV1_STAT.StatEntryDB WHERE IntegrationNro = '"_$GET(^Ens.LookupTable("IntegrationNro",..SourceConfigName))_"'"
     Set tStatement = ##class(%SQL.Statement).%New()
     Set qStatus = tStatement.%Prepare(query)
     If qStatus '= 1 {WRITE "Failed" DO $System.Status.DisplayError(qStatus) QUIT}
@@ -33,39 +34,36 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
 
     // Get the user-defined message process limit from settings
     set tMsgProcessLimit = ..MessageProcessLimit
+    set integrationNro = $GET(^Ens.LookupTable("IntegrationNro",..SourceConfigName))
 
     //set tMsgProcessLimit = 10
     $$$TRACE("Entries found. Creating JSON for sending")
-    Set jsonMessage = ##class(AMK.DEV1.STAT.StatCollector).CreateJSON(tMsgProcessLimit)
+    Set jsonMessage = ..CreateJSON(tMsgProcessLimit)
 
     // Call StatSender with jsonMessage
-    Set listOfMessageIds = ##class(AMK.DEV1.STAT.StatSender).PostJSON(jsonMessage)
+    Set listOfMessageIds = ##class(AMK.DEV1.STAT.StatSender).PostJSON(jsonMessage, integrationNro)
 
     // Call DeleteStatEntries with StatSender response
     Set tStatus = ##class(AMK.DEV1.STAT.StatCollector).DeleteStatEntries(listOfMessageIds)
 
-    WRITE !, tStatus
     Return tStatus
 }
 
-ClassMethod CreateJSON(tMsgProcessLimit) As %String
+Method CreateJSON(tMsgProcessLimit) As %String
 {
-    //set List = ##class(%ListOfObjects).%New()
-    set jsonLista = $LISTBUILD("json")
     // get every MessageID and add that to a list
     Set tGetMsgID = "SELECT TOP "
-    Set tGetMsgID2 = " MessageID FROM AMK_DEV1_STAT.StatEntryDB"
+    Set tGetMsgID2 = " MessageID FROM AMK_DEV1_STAT.StatEntryDB WHERE IntegrationNro = '"_$GET(^Ens.LookupTable("IntegrationNro",..SourceConfigName))_"'"
     Set tGetMsgIDquery = tGetMsgID_tMsgProcessLimit_tGetMsgID2
     Set tStatement = ##class(%SQL.Statement).%New()
     Set qStatus = tStatement.%Prepare(tGetMsgIDquery)
     If qStatus '= 1 {WRITE "Failed1" DO $System.Status.DisplayError(qStatus) QUIT}
     Set rset = tStatement.%Execute()
     Set a = "SELECT * FROM AMK_DEV1_STAT.StatEntryDB WHERE MessageID = '"
-    Set c = "'"
+    Set c = "' AND IntegrationNro = '"_$GET(^Ens.LookupTable("IntegrationNro",..SourceConfigName))_"'"
     Set tArr = []
 
     WHILE rset.%Next() {
-        //Set jsonObject = ##class(AMK.DEV1.STAT.JSONMessage).%New()
         Set messageId = rset.%GetData(1)
         
         // SQL haku messageidllä muiden tietojen saamiseksi
@@ -77,14 +75,6 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %String
         Set rset2 = tStatement.%Execute()
         do rset2.%Next()
 
-        /* TODO lisää oikeat numerot getdatoihin
-        Set jsonObject.IntegrationName = rset2.%GetData(3)
-        Set jsonObject.HostName = rset2.%GetData(2)
-        Set jsonObject.ProductionName = rset2.%GetData(5)
-        Set jsonObject.Status = rset2.%GetData(6)
-        Set jsonObject.TimeStamp = rset2.%GetData(7)
-        Set jsonObject.MessageID = rset2.%GetData(4)
-        */
         Do tArr.%Push({
             "IntegrationNro":      (rset2.%Get("IntegrationNro")),
             "HostName":             (rset2.%Get("HostName")),
@@ -94,38 +84,22 @@ ClassMethod CreateJSON(tMsgProcessLimit) As %String
             "MessageID":            (rset2.%Get("MessageID"))
         })
         
-        //do jsonObject.%JSONExportToString(.string)
-        //set $LIST(jsonLista, *+1) = string
-        
     }
 
-    //Set datajson = {}
-    //Set datajson.data = jsonLista
-
-    //WRITE !,jsonLista, !, !, !, "return data: ", datajson.%ToJSON()
-
     Set jsonMessage = tArr.%ToJSON()
-
-    //Set returnList = datajson.%ToJSON()
     
     return jsonMessage
 }
 
 ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
 {
-    // Väliaikainen lista testaukseen, tää lista tarkotus saada toisesta produktiosta
-    //SET listOfMessageIds=$LISTBUILD(2,4)
-
     // Create SQL statement, ? = list
-    SET myquery="DELETE FROM AMK_DEV1_STAT.StatEntryDB "_ // "DELETE FROM AMK_DEV1_STAT.StatEntryDB "
-                "WHERE MessageID %INLIST ?" // WHERE MessageID %INLIST ?"
+    SET myquery="DELETE FROM AMK_DEV1_STAT.StatEntryDB "_
+                "WHERE MessageID %INLIST ?"
     SET tStatement = ##class(%SQL.Statement).%New()
     SET qStatus = tStatement.%Prepare(myquery)
         IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}
     SET rset = tStatement.%Execute(listOfMessageIds)
-
-    // Tämäkin testauksen ajaksi, poista kun redi
-    DO rset.%Display()
 
     return $$$OK
 }
@@ -141,6 +115,72 @@ Storage Default
 </Value>
 <Value name="3">
 <Value>MessageProcessLimit</Value>
+</Value>
+<Value name="4">
+<Value>SourceConfigName</Value>
+</Value>
+<Value name="5">
+<Value>%WaitForNextCallInterval</Value>
+</Value>
+<Value name="6">
+<Value>ThrottleDelay</Value>
+</Value>
+<Value name="7">
+<Value>%PreserveSession</Value>
+</Value>
+<Value name="8">
+<Value>%RequestHeader</Value>
+</Value>
+<Value name="9">
+<Value>%AlertStartTime</Value>
+</Value>
+<Value name="10">
+<Value>%ProcessError</Value>
+</Value>
+<Value name="11">
+<Value>AlertGracePeriod</Value>
+</Value>
+<Value name="12">
+<Value>%OutsideCreated</Value>
+</Value>
+<Value name="13">
+<Value>%SessionId</Value>
+</Value>
+<Value name="14">
+<Value>%SuperSessionCreatedBeforeSession</Value>
+</Value>
+<Value name="15">
+<Value>%SuperSession</Value>
+</Value>
+<Value name="16">
+<Value>%ConfigQueueName</Value>
+</Value>
+<Value name="17">
+<Value>%ConfigName</Value>
+</Value>
+<Value name="18">
+<Value>%QuitTask</Value>
+</Value>
+<Value name="19">
+<Value>AlertGroups</Value>
+</Value>
+<Value name="20">
+<Value>AlertOnError</Value>
+</Value>
+<Value name="21">
+<Value>ArchiveIO</Value>
+</Value>
+<Value name="22">
+<Value>BusinessPartner</Value>
+</Value>
+<Value name="23">
+<Value>GenerateSuperSessionID</Value>
+</Value>
+<Value name="24">
+<Value>IOLogEntry</Value>
+</Value>
+<Value name="25">
+<Value>InactivityTimeout</Value>
 </Value>
 </Data>
 <DataLocation>^AMK.DEV1.STAT.StatCollectorD</DataLocation>

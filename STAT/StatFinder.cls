@@ -10,7 +10,12 @@ Property TransferDBID As %Integer;
 
 Property Adapter As Ens.InboundAdapter;
 
+/// Doesn't work as excpected :(
+Property SyncWithCollector As %Boolean;
+
 Parameter ADAPTER = "Ens.InboundAdapter";
+
+Parameter SETTINGS As %String = "SyncWithCollector";
 
 Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject) As %Status
 {
@@ -41,8 +46,6 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     Quit task
 }
 
-/*  Creates all StatEntryDB objects from LastmessageID till the end of the TransferDB
-    needs a fail handling with try catch */
 Method UpdateStatEntryDB() As %Status
 {
     Set status = $$$OK
@@ -65,8 +68,13 @@ Method UpdateStatEntryDB() As %Status
         Quit status
     }
     For {
+        try{
         Set TransferDBObj = ##class(AMK.DEV1.TransferDB).%OpenId(x)
         Set AddToDB = ##class(AMK.DEV1.STAT.StatEntryDB).AddToEntryDB(TransferDBObj)
+        }
+        catch err{
+            $$$TRACE("Opening the object with ID "_x_"Failed.")
+        }
         Set x=x+1
         Quit:x>y
     }

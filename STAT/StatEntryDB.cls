@@ -13,6 +13,7 @@ Property Status As %Boolean;
 
 Property MessageID As %Integer;
 
+/// Adding TransferDB object to the StatEntry DB
 ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.StatEntryDB
 {
     #Dim Data As AMK.DEV1.STAT.StatEntryDB
@@ -30,6 +31,8 @@ ClassMethod AddToEntryDB(TransferDB As AMK.DEV1.TransferDB) As AMK.DEV1.STAT.Sta
     Return 1
 }
 
+/// Method for getting the largest ID already in the StatEntryDB, to prevent duplicates
+/// used by StatFinder
 ClassMethod GetLargestID() As %Integer
 {
     set query = "SELECT TOP 1 MessageID FROM AMK_DEV1_STAT.StatEntryDB ORDER By MessageID DESC"

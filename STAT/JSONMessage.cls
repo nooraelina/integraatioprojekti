@@ -1,6 +1,9 @@
 Class AMK.DEV1.STAT.JSONMessage Extends (%Persistent, %JSON.Adaptor)
 {
 
+/* This class kind of missed it's original purpose as it was decided to change on to
+using JSON Arrays/Strings as a means of transferring database information */
+/// Currently used as a message body for getting LasMessageID
 Property MessageID As %Integer;
 
 Property RequestType As %Integer;

@@ -23,14 +23,22 @@ ClassMethod Test() As %Status
 ClassMethod GetLastMessageID(id As %String) As %Status
 {
 	Set result={}
-	Set TableName = $GET(^Ens.LookupTable("GetTable",id))
-	set query = "SELECT TOP 1 MessageID FROM AMK_STAT_StatDB."_TableName_" ORDER By MessageID DESC"
-	set tStatement = ##Class(%SQL.Statement).%New()
-	set qStatus = tStatement.%Prepare(query)
-	set rset = tStatement.%Execute()
-	do rset.%Next()
-	set LastMessageID = rset.%GetData(1)
-	do result.%Set("LastMessageID", LastMessageID)
+
+	/*Koitettu asettaa if ehto joka asettaa ^LastMessageID:n olemaan DB1 lasMessageID:n mukainen
+	mikäli kyseiselle globaalille ei ole vielä annettu arvoa (tiedä sitten mikä on globaalin lähtöarvo) 
+	Alla olevalla kommentoidulla haulla (ilman if ehtoa) saa tarvittaessa ainakin alkuun LastMessageID:n*/
+
+	/*if ^LastMessageID '= 0 {
+		Set TableName = $GET(^Ens.LookupTable("GetTable",id))
+		set query = "SELECT TOP 1 MessageID FROM AMK_STAT_StatDB."_TableName_" ORDER By MessageID DESC"
+		set tStatement = ##Class(%SQL.Statement).%New()
+		set qStatus = tStatement.%Prepare(query)
+		set rset = tStatement.%Execute()
+		do rset.%Next()
+		set ^LastMessageID = rset.%GetData(1)
+		}*/
+
+	do result.%Set("LastMessageID", ^LastMessageID)
 	write result.%ToJSON()
 	Quit result
 }
@@ -39,13 +47,13 @@ ClassMethod AddtoDB(id As %String) As %Status
 {
 	Set result = {}
 	Set i = 1
+	/// Haetaan lookuptablesta oikea Database IntegrationNro:lla (esim. INT-1234), johon tiedot tallennetaan
 	Set TableName = $GET(^Ens.LookupTable("GetTable",id))
 	Set dynObj = {}.%FromJSON(%request.Content)
 	set iter = dynObj.%GetIterator() 
 	while iter.%GetNext(.key , .value) {
-		/// How to call a certain class? now it is just calling DB1
 		try {
-		Set cm = ##class(AMK.STAT.StatDB.DB1).%New()
+		Set cm = $CLASSMETHOD("AMK.STAT.StatDB."_TableName, "%New")
 		Set cm.IntegrationNro = value.IntegrationNro
 		Set cm.HostName = value.HostName
 		Set cm.ProductionName = value.ProductionName
@@ -54,6 +62,9 @@ ClassMethod AddtoDB(id As %String) As %Status
 		Set cm.MessageID = value.MessageID
 
 		Do cm.%Save()
+
+		//asetetaa globaali ^LastMessageID olemaan viimeisin tallennettun olion ID
+		Set ^LastMessageID = value.MessageID
 
 		do result.%Set("SavedID"_i, value.MessageID)
 		}
@@ -67,8 +78,6 @@ ClassMethod AddtoDB(id As %String) As %Status
 		set i=i+1
 	}
 
-	//do result.%Set("Status",$s($$$ISERR(sc):$system.Status.GetOneErrorText(sc),1:"OK"))
-	//do result.%Set("FailedID", 119)
 	write result.%ToJSON()
 	Quit result
 }
