@@ -100,7 +100,6 @@ ClassMethod DeleteStatEntries(listOfMessageIds) As %Status
     SET qStatus = tStatement.%Prepare(myquery)
         IF qStatus'=1 {WRITE "%Prepare failed:" DO $System.Status.DisplayError(qStatus) QUIT}
     SET rset = tStatement.%Execute(listOfMessageIds)
-
     return $$$OK
 }
 
