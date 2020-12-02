@@ -30,17 +30,17 @@ Method OnMessage(pRequest As %Persistent, Output pResponse As %Persistent) As %S
 
 /* tämä tarkoitus muuttaa vielä ClassMetodista Methodiksi, mutta jostain syystä toiminta ei 
 vaan skulannut vaikka lähes täysin identtisellä toiminnolla varustettu GetLastMessageID pelittää */
-/// eli tiedossa olevia hardcodauksia alapuolella
 ClassMethod PostJSON(jsonMessage As %String, integrationNro As %String) As %Status
 {
 	// Kutsutaan StatCollectorista JSONin kanssa, ja odottaa vastauksena listaa tms messageideistä
 	
 	///Tekee HTTP pyynnön ja post() JSON
 	Set RequestJSON= ##class(%Net.HttpRequest).%New()
-	Set RequestJSON.Server = "localhost"
-	Set RequestJSON.Port = 52773
+	Set RequestJSON.Server = ##class(Ens.Director).GetItemSettingValue("StatSender", "Adapter", "HTTPServer", .status)
+	Set RequestJSON.Port = ##class(Ens.Director).GetItemSettingValue("StatSender", "Adapter", "HTTPPort", .status)
+	Set URL = ##class(Ens.Director).GetItemSettingValue("StatSender", "Adapter", "URL", .status)
 	Do RequestJSON.EntityBody.Write(jsonMessage)
-	Do RequestJSON.Post("/rest/statdataupdater/addtodb/"_integrationNro)
+	Do RequestJSON.Post(URL_"/addtodb/"_integrationNro)
 	set response = RequestJSON.HttpResponse
 
 	set dynObj = {}.%FromJSON(response.Data)

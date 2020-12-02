@@ -28,15 +28,18 @@ ClassMethod GetLastMessageID(id As %String) As %Status
 	mikäli kyseiselle globaalille ei ole vielä annettu arvoa (tiedä sitten mikä on globaalin lähtöarvo) 
 	Alla olevalla kommentoidulla haulla (ilman if ehtoa) saa tarvittaessa ainakin alkuun LastMessageID:n*/
 
-	/*if ^LastMessageID '= 0 {
-		Set TableName = $GET(^Ens.LookupTable("GetTable",id))
-		set query = "SELECT TOP 1 MessageID FROM AMK_STAT_StatDB."_TableName_" ORDER By MessageID DESC"
-		set tStatement = ##Class(%SQL.Statement).%New()
-		set qStatus = tStatement.%Prepare(query)
-		set rset = tStatement.%Execute()
-		do rset.%Next()
-		set ^LastMessageID = rset.%GetData(1)
-		}*/
+	
+	Set TableName = $GET(^Ens.LookupTable("GetTable",id))
+	set query = "SELECT TOP 1 MessageID FROM AMK_STAT_StatDB."_TableName_" ORDER By MessageID DESC"
+	set tStatement = ##Class(%SQL.Statement).%New()
+	set qStatus = tStatement.%Prepare(query)
+	set rset = tStatement.%Execute()
+	do rset.%Next()
+	set MessageID = rset.%GetData(1)
+	if MessageID = "" {
+		set ^LastMessageID = 1
+	}
+	
 
 	do result.%Set("LastMessageID", ^LastMessageID)
 	write result.%ToJSON()

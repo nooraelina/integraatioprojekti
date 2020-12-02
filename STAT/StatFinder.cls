@@ -34,15 +34,11 @@ Method OnProcessInput(pInput As %RegisteredObject, pOutput As %RegisteredObject)
     do rset.%Next()
     Set ..TransferDBID = rset.%GetData(1)
 
-    if ..LastMessageID '= ..LatestMessageID {
-        $$$TRACE("Updating StatEntryDB")
-        Set task = ..UpdateStatEntryDB()
-        Set ..LatestMessageID = ..LastMessageID
-    } else {
-        Set task = 1
-        $$$TRACE("STAT-Database up to date, Quitting.")
-        Quit task
-    }
+    
+    $$$TRACE("Updating StatEntryDB")
+    Set task = ..UpdateStatEntryDB()
+    Set ..LatestMessageID = ..LastMessageID
+
     Quit task
 }
 
@@ -65,6 +61,7 @@ Method UpdateStatEntryDB() As %Status
     
     Set y = ..TransferDBID
     If x>y{
+        $$$TRACE("No New Messages to transfer, Quitting.")
         Quit status
     }
     For {
