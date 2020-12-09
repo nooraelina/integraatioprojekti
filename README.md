@@ -1,2 +1,2 @@
 # Integraatioprojekti
-Terveysteknologiaprojektiin liittyvää koodisälää
+Terveysteknologiaprojektiin liittyvää ohjelmointikoodia.
